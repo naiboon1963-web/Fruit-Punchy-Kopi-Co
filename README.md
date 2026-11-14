@@ -1,6 +1,6 @@
-# Fruit Punchy Kopi & Co.
+# Toast & Tales
 
-A responsive café website built from the supplied PRD with React, Vite, and Tailwind CSS.
+A responsive neighbourhood café website built with React, Vite, and Tailwind CSS. Rebranded as Toast & Tales, with terracotta and parchment colours, vintage lettering, and the tagline “Every table has a story.”
 
 ## Development
 
