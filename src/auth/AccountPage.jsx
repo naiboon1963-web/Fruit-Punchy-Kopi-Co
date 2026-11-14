@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { accountUrl, authConfigured, supabase } from '../lib/supabase'
+import { accountUrl, authConfigured, emailDeliveryReady, supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 import './accounts.css'
 
-const validViews = ['signin', 'join', 'staff', 'forgot', 'resend', 'callback', 'set-password', 'reset', 'dashboard']
+const validViews = ['signin', 'join', 'staff', 'staff-create', 'forgot', 'resend', 'callback', 'set-password', 'reset', 'dashboard']
+const accountPages = [['join', 'Create member account'], ['signin', 'Member login'], ['staff-create', 'Create staff account'], ['staff', 'Staff sign-in']]
 
 function authMessage(error) {
   if (error?.code === 'email_not_confirmed') return 'Please verify your email before signing in. You can request a new verification email below.'
@@ -33,7 +34,7 @@ export default function AccountPage() {
     window.history.replaceState(null, '', accountUrl(next))
   }
 
-  useEffect(() => { document.title = 'Your account | Fruit Punchy Kopi and Art' }, [])
+  useEffect(() => { document.title = `${accountPages.find(([key]) => key === view)?.[1] || 'Your account'} | Fruit Punchy Kopi and Art` }, [view])
   useEffect(() => {
     const params = new URLSearchParams(window.location.hash.slice(1))
     if (params.has('error') || new URLSearchParams(window.location.search).has('error')) {
@@ -45,7 +46,7 @@ export default function AccountPage() {
 
   async function submit(event) {
     event.preventDefault()
-    if (!supabase || busy) return
+    if (!supabase || busy || (['join', 'forgot', 'resend'].includes(view) && !emailDeliveryReady)) return
     const values = new FormData(event.currentTarget)
     const email = String(values.get('email') || '').trim().toLowerCase()
     const password = String(values.get('password') || '')
@@ -85,6 +86,14 @@ export default function AccountPage() {
           setError('Verify your email before accessing your account. Request another verification email below.')
           return
         }
+        if (view === 'staff') {
+          const { data: staffProfile, error: staffError } = await supabase.from('profiles').select('role').eq('id', data.user.id).single()
+          if (staffError || !['staff', 'admin'].includes(staffProfile?.role)) {
+            await supabase.auth.signOut({ scope: 'local' })
+            setError(staffError ? 'Staff access could not be verified. Please contact the café owner.' : 'This is a member account. Use member login, or ask the café owner about a staff invitation.')
+            return
+          }
+        }
         await refreshUser()
         navigate('dashboard')
       }
@@ -96,15 +105,17 @@ export default function AccountPage() {
   const verified = Boolean(user?.email_confirmed_at)
 
   return <main id="main" className="account-page shell">
-    <aside className="account-welcome"><p className="eyebrow">A LITTLE MORE FRUIT PUNCHY</p><h1>Your corner.<br /><em>Your community.</em></h1><p>A warm welcome for our members and the people who make it all happen.</p><img src="/images/fruit-punchy-logo.webp" alt="Fruit Punchy fruit-character artwork" width="818" height="392" /><a className="text-link" href="/">← Back to the café</a></aside>
+    <aside className="account-welcome"><p className="eyebrow">A LITTLE MORE FRUIT PUNCHY</p><h1>Your corner.<br /><em>Your community.</em></h1><p>A warm welcome for our members and the people who make it all happen.</p><div className="account-page-links" aria-label="Member and staff pages">{accountPages.map(([key, label]) => <a key={key} href={accountUrl(key)} aria-current={view === key ? 'page' : undefined}><span>{label}</span><span aria-hidden="true">↗</span></a>)}</div><img src="/images/fruit-punchy-logo.webp" alt="Fruit Punchy fruit-character artwork" width="818" height="392" /><a className="text-link" href="/">← Back to the café</a></aside>
     <section className="account-panel" aria-labelledby="account-heading">
-      {!authConfigured ? <><p className="eyebrow">MEMBERS & STAFF</p><h2 id="account-heading">A new corner,<br /><em>coming soon.</em></h2><p>We’re getting member and staff accounts ready. Registration will open once email verification is connected.</p><a className="button" href="/">Explore the café</a></>
-      : loading ? <><h2 id="account-heading">One moment…</h2><p role="status">Checking your account securely.</p></>
-      : user && verified && !settingPassword ? <Dashboard user={user} />
+      {!authConfigured && <Notice>Account activation is pending. You can view the forms below; registration, sign-in and invitation emails will be available once Supabase setup is complete.</Notice>}
+      {authConfigured && !emailDeliveryReady && <Notice>Supabase is connected. New registrations, verification emails and staff invitations will open once our email sender is ready. Existing verified accounts can sign in.</Notice>}
+      {loading ? <><h2 id="account-heading">One moment…</h2><p role="status">Checking your account securely.</p></>
+      : view === 'staff-create' ? <StaffCreation user={user} />
+      : user && verified && !settingPassword ? <Dashboard user={user} requireStaff={view === 'staff'} />
       : <>
         <p className="eyebrow">{view === 'staff' ? 'FOR OUR CAFÉ TEAM' : 'WELCOME TO THE NEIGHBOURHOOD'}</p>
-        <h2 id="account-heading">{settingPassword ? 'Choose a password.' : view === 'join' ? 'Make yourself at home.' : view === 'forgot' ? 'Forgot your password?' : view === 'resend' ? 'Check your inbox.' : 'Good to see you.'}</h2>
-        <p>{settingPassword ? 'Your verified account deserves a strong password. Use at least 12 characters.' : view === 'join' ? 'Create your member account, then verify your email to get started.' : view === 'staff' ? 'Sign in with your staff account. New team members join through an invitation from the café owner.' : view === 'forgot' ? 'We’ll email you a link to choose a new password.' : view === 'resend' ? 'Request a fresh member verification email. Staff invitations are reissued by the café owner.' : 'Sign in to your member or staff account.'}</p>
+        <h2 id="account-heading">{settingPassword ? 'Choose a password.' : view === 'join' ? 'Create a member account.' : view === 'staff' ? 'Staff sign-in.' : view === 'forgot' ? 'Forgot your password?' : view === 'resend' ? 'Check your inbox.' : 'Member login.'}</h2>
+        <p>{settingPassword ? 'Your verified account deserves a strong password. Use at least 12 characters.' : view === 'join' ? 'Join our little community. Create your account, then verify your email to get started.' : view === 'staff' ? 'Welcome back to the café team. Sign in with your verified staff account. New team members receive an invitation from the owner.' : view === 'forgot' ? 'We’ll email you a link to choose a new password.' : view === 'resend' ? 'Request a fresh member verification email. Staff invitations are reissued by the café owner.' : 'Good to see you again. Enter your verified member email and password.'}</p>
         <Notice error>{error || authError}</Notice><Notice>{message}</Notice>
         {settingPassword && !verified ? <><Notice error>Open the link in your verification, invitation, or password-reset email to continue.</Notice><button type="button" className="account-text-button" onClick={() => navigate('forgot')}>Request a password-reset email</button></> : <form onSubmit={submit} className="account-form">
           {view === 'join' && <label>Your name<input name="name" autoComplete="name" maxLength={100} required /></label>}
@@ -112,20 +123,21 @@ export default function AccountPage() {
           {(settingPassword || !['forgot', 'resend'].includes(view)) && <label>{settingPassword ? 'New password' : 'Password'}<input key={`password-${view}`} name="password" type="password" autoComplete={view === 'join' || settingPassword ? 'new-password' : 'current-password'} minLength={view === 'join' || settingPassword ? 12 : undefined} maxLength={128} required /></label>}
           {view === 'join' && <p className="account-field-hint">At least 12 characters. Verify your email before signing in.</p>}
           {settingPassword && <label>Confirm new password<input name="confirm" type="password" autoComplete="new-password" minLength={12} maxLength={128} required /></label>}
-          <button className="button" type="submit" disabled={busy}>{busy ? 'Please wait…' : settingPassword ? 'Save password' : view === 'join' ? 'Create member account' : view === 'forgot' ? 'Send reset email' : view === 'resend' ? 'Resend verification email' : 'Sign in'}</button>
+          <button className="button" type="submit" disabled={busy || !authConfigured || (['join', 'forgot', 'resend'].includes(view) && !emailDeliveryReady)}>{busy ? 'Please wait…' : settingPassword ? 'Save password' : view === 'join' ? 'Create member account' : view === 'forgot' ? 'Send reset email' : view === 'resend' ? 'Resend verification email' : view === 'staff' ? 'Sign in as staff' : 'Sign in'}</button>
         </form>}
         <div className="account-links">
           <button type="button" onClick={() => navigate(view === 'join' ? 'signin' : 'join')}>{view === 'join' ? 'Already a member? Sign in' : 'New here? Join as a member'}</button>
           <button type="button" onClick={() => navigate('forgot')}>Forgot password?</button>
           <button type="button" onClick={() => navigate('resend')}>Resend verification email</button>
           <button type="button" onClick={() => navigate('staff')}>Staff sign-in</button>
+          <button type="button" onClick={() => navigate('staff-create')}>Owner? Create a staff account</button>
         </div>
       </>}
     </section>
   </main>
 }
 
-function Dashboard({ user }) {
+function Dashboard({ user, requireStaff = false }) {
   const [profile, setProfile] = useState(null)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -165,6 +177,10 @@ function Dashboard({ user }) {
     } catch { setError('Unable to sign out. Please try again.'); setBusy(false) }
   }
 
+  if (!loading && profile && requireStaff && !['staff', 'admin'].includes(profile.role)) {
+    return <><p className="eyebrow">FOR OUR CAFÉ TEAM</p><h2 id="account-heading">Staff access required.</h2><Notice error>This is a member account. Staff access must be approved by the café owner.</Notice><a className="button" href={accountUrl('dashboard')}>Go to member account</a><button className="account-text-button" type="button" onClick={signOut} disabled={busy}>Sign out and use a staff account</button></>
+  }
+
   return <>
     <p className="eyebrow">{profile?.role === 'admin' ? 'OWNER DASHBOARD' : profile?.role === 'staff' ? 'STAFF CORNER' : 'YOUR MEMBER CORNER'}</p>
     <h2 id="account-heading">Hello{profile?.display_name ? `, ${profile.display_name}` : ''}.</h2>
@@ -180,13 +196,30 @@ function Dashboard({ user }) {
   </>
 }
 
-function StaffInvitations() {
+function StaffCreation({ user }) {
+  const [authorized, setAuthorized] = useState(false)
+  const [checking, setChecking] = useState(Boolean(user?.email_confirmed_at))
+  useEffect(() => {
+    let active = true
+    if (!supabase || !user?.email_confirmed_at) { setAuthorized(false); setChecking(false); return }
+    setChecking(true)
+    supabase.from('profiles').select('role').eq('id', user.id).single().then(({ data, error }) => {
+      if (active) { setAuthorized(!error && data?.role === 'admin'); setChecking(false) }
+    }).catch(() => { if (active) { setAuthorized(false); setChecking(false) } })
+    return () => { active = false }
+  }, [user?.id, user?.email_confirmed_at])
+  return <><p className="eyebrow">OWNER-ONLY STAFF CREATION</p><h2 id="account-heading">Create a staff account.</h2><p>Invite someone to the Fruit Punchy team. They’ll verify their email and choose their own password using a personal invitation link.</p><ol className="staff-steps"><li>Owner enters the staff name and email.</li><li>Staff member opens the verification email.</li><li>Staff member sets a password and signs in.</li></ol>{checking ? <p role="status">Checking owner access…</p> : !authorized && <Notice>{user ? 'Only the verified café owner can create staff accounts.' : 'Sign in with the verified owner account to send staff invitations.'} <a href={accountUrl('staff')}>Owner sign-in →</a></Notice>}<StaffInvitations disabled={!authConfigured || !authorized || checking} /></>
+}
+
+function StaffInvitations({ disabled = false }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
   async function invite(event) {
-    event.preventDefault(); setBusy(true); setError(''); setMessage('')
+    event.preventDefault()
+    if (disabled || !supabase || busy || !emailDeliveryReady) return
+    setBusy(true); setError(''); setMessage('')
     const form = event.currentTarget
     const values = new FormData(form)
     try {
@@ -201,5 +234,5 @@ function StaffInvitations() {
     finally { setBusy(false) }
   }
 
-  return <section className="staff-invitations" aria-labelledby="staff-invite-title"><h3 id="staff-invite-title">Invite a team member</h3><p>We’ll send a personal invitation. New staff verify their email and choose a password before getting access.</p><Notice error>{error}</Notice><Notice>{message}</Notice><form className="account-form" onSubmit={invite}><label>Staff name<input name="name" autoComplete="off" maxLength={100} required /></label><label>Staff email<input name="email" type="email" autoComplete="off" maxLength={254} required /></label><button className="button" disabled={busy}>{busy ? 'Sending…' : 'Send staff invitation'}</button></form></section>
+  return <section className="staff-invitations" aria-labelledby="staff-invite-title"><h3 id="staff-invite-title">Staff details</h3><p>We’ll send a personal invitation. New staff verify their email and choose a password before getting access.</p><Notice error>{error}</Notice><Notice>{message}</Notice><form className="account-form" onSubmit={invite}><label>Staff name<input name="name" autoComplete="off" maxLength={100} required /></label><label>Staff email<input name="email" type="email" autoComplete="off" maxLength={254} required /></label><button className="button" disabled={busy || disabled || !emailDeliveryReady}>{busy ? 'Sending…' : 'Send staff invitation'}</button></form></section>
 }

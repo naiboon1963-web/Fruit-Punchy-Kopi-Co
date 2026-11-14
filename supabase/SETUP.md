@@ -46,29 +46,46 @@ Project: `cmsnlbvkxwsbzankxxts`.
 6. Deploy the Edge Function:
 
    ```sh
-   supabase functions deploy invite-staff --project-ref cmsnlbvkxwsbzankxxts
-   supabase secrets set SITE_URL=https://fruit-punchy-kopi-co.vercel.app --project-ref cmsnlbvkxwsbzankxxts
+   supabase functions deploy invite-staff --remote=cmsnlbvkxwsbzankxxts --use-api
    ```
 
    `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are supplied by the Supabase
    Edge runtime. The service-role key is **never** sent to the website. The
    function verifies the bearer JWT with `auth.getUser()` and checks the admin
    role itself, so `verify_jwt = false` only disables the legacy gateway check.
+   The function defaults to the production website origin. If the domain changes,
+   set its `SITE_URL` secret to the new canonical origin before deploying.
 7. Put the public URL and public publishable/legacy anon key into `.env.local`
    locally and the matching Vercel build environment variables:
 
    ```text
    VITE_SUPABASE_URL
    VITE_SUPABASE_PUBLISHABLE_KEY
+   VITE_AUTH_EMAIL_READY
    ```
 
    Rebuild after changing these. Never use a service-role or `sb_secret_` key.
+   Keep `VITE_AUTH_EMAIL_READY=false` until custom SMTP delivery has been tested;
+   then set it to `true` and redeploy. Until then, verified users can sign in but
+   registration, password-reset, verification-resend and staff-invite submissions
+   are disabled with a clear message.
 8. Register the owner through the member form and verify the owner's email.
    Replace the email placeholder in `bootstrap-admin.sql` and execute it in the
    SQL Editor as project owner. This is the only initial admin bootstrap; the
    first person to register is deliberately **not** made an administrator.
 
 ## Staff onboarding
+
+The four account pages are:
+
+- Member creation: `/?account=join`
+- Member login: `/?account=signin`
+- Owner-only staff creation: `/?account=staff-create`
+- Staff sign-in: `/?account=staff`
+
+When the public Supabase configuration is absent, these pages remain viewable
+but submission is disabled with an activation-pending notice. Do not enable the
+Vercel account configuration until the database and email delivery are ready.
 
 The owner signs in → enters the staff name/email → sends an invitation. The
 staff member clicks the email link → chooses a password → enters the staff

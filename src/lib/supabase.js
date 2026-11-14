@@ -4,6 +4,7 @@ const projectUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
 const publicKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
 
 export const authConfigured = Boolean(projectUrl && publicKey && /^https:\/\//.test(projectUrl))
+export const emailDeliveryReady = import.meta.env.VITE_AUTH_EMAIL_READY === 'true'
 
 // Only the public publishable key belongs in Vite. Never use a service-role key here.
 export const supabase = authConfigured
