@@ -208,7 +208,7 @@ function StaffCreation({ user }) {
     }).catch(() => { if (active) { setAuthorized(false); setChecking(false) } })
     return () => { active = false }
   }, [user?.id, user?.email_confirmed_at])
-  return <><p className="eyebrow">OWNER-ONLY STAFF CREATION</p><h2 id="account-heading">Create a staff account.</h2><p>Invite someone to the Fruit Punchy team. They’ll verify their email and choose their own password using a personal invitation link.</p><ol className="staff-steps"><li>Owner enters the staff name and email.</li><li>Staff member opens the verification email.</li><li>Staff member sets a password and signs in.</li></ol>{checking ? <p role="status">Checking owner access…</p> : !authorized && <Notice>{user ? 'Only the verified café owner can create staff accounts.' : 'Sign in with the verified owner account to send staff invitations.'} <a href={accountUrl('staff')}>Owner sign-in →</a></Notice>}<StaffInvitations disabled={!authConfigured || !authorized || checking} /></>
+  return <><p className="eyebrow">OWNER-ONLY STAFF CREATION</p><h2 id="account-heading">Create a staff account.</h2><p>Invite someone to the Fruit Punchy team. They’ll verify their email and choose their own password using a personal invitation link.</p><ol className="staff-steps"><li>Owner enters the staff name, email and authorization code.</li><li>Staff member opens the verification email.</li><li>Staff member sets a password and signs in.</li></ol>{checking ? <p role="status">Checking owner access…</p> : !authorized && <Notice>{user ? 'Only the verified café owner can create staff accounts.' : 'Sign in with the verified owner account to send staff invitations.'} <a href={accountUrl('staff')}>Owner sign-in →</a></Notice>}<StaffInvitations disabled={!authConfigured || !authorized || checking} /></>
 }
 
 function StaffInvitations({ disabled = false }) {
@@ -223,7 +223,7 @@ function StaffInvitations({ disabled = false }) {
     const form = event.currentTarget
     const values = new FormData(form)
     try {
-      const { data, error: inviteError } = await supabase.functions.invoke('invite-staff', { body: { email: String(values.get('email')).trim().toLowerCase(), display_name: String(values.get('name')).trim() } })
+      const { data, error: inviteError } = await supabase.functions.invoke('invite-staff', { body: { email: String(values.get('email')).trim().toLowerCase(), display_name: String(values.get('name')).trim(), authorization_code: String(values.get('authorization_code') || '').trim() } })
       if (inviteError) {
         const details = await inviteError.context?.json?.().catch(() => null)
         throw new Error(details?.error || 'The invitation could not be sent. Check the email address and try again.')
@@ -234,5 +234,5 @@ function StaffInvitations({ disabled = false }) {
     finally { setBusy(false) }
   }
 
-  return <section className="staff-invitations" aria-labelledby="staff-invite-title"><h3 id="staff-invite-title">Staff details</h3><p>We’ll send a personal invitation. New staff verify their email and choose a password before getting access.</p><Notice error>{error}</Notice><Notice>{message}</Notice><form className="account-form" onSubmit={invite}><label>Staff name<input name="name" autoComplete="off" maxLength={100} required /></label><label>Staff email<input name="email" type="email" autoComplete="off" maxLength={254} required /></label><button className="button" disabled={busy || disabled || !emailDeliveryReady}>{busy ? 'Sending…' : 'Send staff invitation'}</button></form></section>
+  return <section className="staff-invitations" aria-labelledby="staff-invite-title"><h3 id="staff-invite-title">Staff details</h3><p>We’ll send a personal invitation. New staff verify their email and choose a password before getting access.</p><Notice error>{error}</Notice><Notice>{message}</Notice><form className="account-form" onSubmit={invite}><label>Staff name<input name="name" autoComplete="off" maxLength={100} required /></label><label>Staff email<input name="email" type="email" autoComplete="off" maxLength={254} required /></label><label>Staff authorization code<input name="authorization_code" type="password" autoComplete="off" maxLength={128} required /></label><p className="account-field-hint">Enter the separate staff code provided by the café owner.</p><button className="button" disabled={busy || disabled || !emailDeliveryReady}>{busy ? 'Sending…' : 'Send staff invitation'}</button></form></section>
 }

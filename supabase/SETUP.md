@@ -87,10 +87,20 @@ When the public Supabase configuration is absent, these pages remain viewable
 but submission is disabled with an activation-pending notice. Do not enable the
 Vercel account configuration until the database and email delivery are ready.
 
-The owner signs in → enters the staff name/email → sends an invitation. The
+The owner signs in → enters the staff name/email and staff authorization code → sends an invitation. The
 staff member clicks the email link → chooses a password → enters the staff
 dashboard. Merely receiving an invitation does not grant access. Auth must
 record the email as confirmed before the trigger grants the staff role.
+
+Staff creation also requires the separate `STAFF_CREATION_CODE` stored in the
+owner's ignored `.env.smtp.local` file. This is not the Gmail App Password. Only
+its SHA-256 hash is stored as the Edge Function secret `STAFF_CREATION_CODE_HASH`;
+neither the staff code nor the SMTP password belongs in Vite or Git. The server
+rejects missing/incorrect codes before creating an invitation or sending email,
+and rejects all invitations if the code secret is absent. The owner role and
+verified email are still required even with the correct code. Rotate the code
+by generating a fresh random value locally, updating the server hash, and
+replacing the local value. No browser redeploy is needed for a code rotation.
 
 Invitations expire after seven days. Email-link expiry is separately controlled
 by Supabase Auth; an expired link must be reissued. The owner can retry after a

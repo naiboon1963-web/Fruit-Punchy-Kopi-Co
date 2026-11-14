@@ -31,11 +31,21 @@ Deno.serve(async (request: Request) => {
     if (Number(request.headers.get('Content-Length') || 0) > 4096) return respond(413, { error: 'Request too large.' })
     const bodyText = await request.text()
     if (bodyText.length > 4096) return respond(413, { error: 'Request too large.' })
-    let body: { email?: string; display_name?: string }
+    let body: { email?: string; display_name?: string; authorization_code?: string }
     try { body = JSON.parse(bodyText) } catch { return respond(400, { error: 'Invalid request.' }) }
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
     const displayName = typeof body.display_name === 'string' ? body.display_name.trim() : ''
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || !displayName || displayName.length > 100) return respond(400, { error: 'Enter a valid staff name and email.' })
+
+    const expectedCodeHash = Deno.env.get('STAFF_CREATION_CODE_HASH') || ''
+    if (!/^[a-f0-9]{64}$/.test(expectedCodeHash)) return respond(503, { error: 'Staff authorization is not configured. Contact the café owner.' })
+    const authorizationCode = typeof body.authorization_code === 'string' ? body.authorization_code.trim() : ''
+    if (!authorizationCode || authorizationCode.length > 128) return respond(403, { error: 'Enter a valid staff authorization code.' })
+    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(authorizationCode)))
+    const suppliedCodeHash = Array.from(digest, byte => byte.toString(16).padStart(2, '0')).join('')
+    let difference = 0
+    for (let i = 0; i < 64; i++) difference |= suppliedCodeHash.charCodeAt(i) ^ expectedCodeHash.charCodeAt(i)
+    if (difference !== 0) return respond(403, { error: 'Enter a valid staff authorization code.' })
 
     const { data: existing, error: lookupError } = await admin.from('profiles').select('id, role').eq('email', email).maybeSingle()
     if (lookupError) return respond(500, { error: 'Unable to check the account. Please retry.' })
