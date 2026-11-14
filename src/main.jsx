@@ -1,0 +1,73 @@
+import React, { useEffect, useRef, useState } from 'react'
+import { createRoot } from 'react-dom/client'
+import './styles.css'
+
+const directions = 'https://www.google.com/maps/search/?api=1&query=Bukit+Timah+Shopping+Centre+170+Upper+Bukit+Timah+Road+Singapore+588179'
+const links = [['Our story', '#about'], ['The menu', '#menu'], ['Find us', '#contact']]
+
+function Icon({ name = 'arrow', className = '', ...props }) {
+  const paths = {
+    arrow: <><path d="M4 12h15M13 5l7 7-7 7" /></>,
+    pin: <><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
+    sun: <><circle cx="12" cy="12" r="4" /><path d="M12 1v2m0 18v2M1 12h2m18 0h2M4.2 4.2l1.4 1.4m12.8 12.8 1.4 1.4M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" /></>,
+    heart: <path d="m12 21-8-8C-3 6 6-2 12 5c6-7 15 1 8 8Z" />,
+    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 6v6l4 2" /></>,
+  }
+  return <svg className={`icon ${className}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>{paths[name]}</svg>
+}
+
+function Cup({ className = '' }) {
+  return <svg className={className} viewBox="0 0 76 78" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 34h39v14a19.5 19.5 0 0 1-39 0ZM55 37h5c11 0 11 17 0 17h-6M11 73h49M28 24c-8-9 8-9 0-18M42 24c-8-9 8-9 0-18" /><path d="M21 41h29" opacity=".45" /></svg>
+}
+
+function Brand({ footer = false, onClick }) {
+  return <a href="#top" className={`brand ${footer ? 'brand-footer' : ''}`} aria-label="Fruit Punchy Kopi & Co. — back to top" onClick={onClick}><Cup className="brand-cup" /><span>Fruit Punchy<span className="brand-second">Kopi & Co.<span className="brand-dot">✳</span></span></span></a>
+}
+
+function Header() {
+  const [open, setOpen] = useState(false)
+  const toggle = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') { setOpen(false); toggle.current?.focus() }
+    }
+    const closeOnDesktop = () => { if (window.innerWidth > 700) setOpen(false) }
+    document.addEventListener('keydown', closeOnEscape)
+    window.addEventListener('resize', closeOnDesktop)
+    return () => { document.removeEventListener('keydown', closeOnEscape); window.removeEventListener('resize', closeOnDesktop) }
+  }, [open])
+  return <header className="site-header"><div className="shell header-inner"><Brand onClick={() => setOpen(false)} /><button ref={toggle} className={`menu-toggle ${open ? 'is-open' : ''}`} aria-label={open ? 'Close navigation' : 'Open navigation'} aria-expanded={open} aria-controls="main-navigation" onClick={() => setOpen(!open)}><span /><span /></button><nav id="main-navigation" aria-label="Main navigation" className={open ? 'nav-open' : ''}>{links.map(([label, href]) => <a key={href} href={href} onClick={() => setOpen(false)}>{label}</a>)}<a className="nav-visit" href={directions} target="_blank" rel="noopener noreferrer">Come on over <Icon name="arrow" /></a></nav></div></header>
+}
+
+function Hero() {
+  return <><section className="hero shell" aria-labelledby="hero-title"><div className="hero-copy"><p className="eyebrow"><span className="tiny-flower">✳</span> YOUR NEIGHBOURHOOD KOPI CORNER</p><h1 id="hero-title">Good kopi.<br />Great company.<br /><em>Just like home.</em></h1><p className="hero-description">Familiar flavours, unhurried mornings, and a seat<br className="desktop-break" /> just for you. Welcome to Fruit Punchy Kopi & Co.</p><a className="button" href="#menu">Find your favourite <Icon /></a><a className="hero-location" href="#contact"><Icon name="pin" /> A little corner of Bukit Timah, Singapore</a></div><div className="hero-art"><div className="arch-frame"><img src="/images/cafe.webp" alt="Cosy outdoor café tables on a sunlit street; illustrative atmosphere, not the actual café" width="920" height="1120" fetchPriority="high" /><div className="photo-caption"><span>TAKE A BREATHER.</span><span>STAY A LITTLE LONGER.</span></div></div><div className="round-stamp" aria-label="Made for slow mornings"><span>GOOD KOPI</span><Cup /><span>BETTER COMPANY</span></div><span className="hero-side-note" aria-hidden="true">A WARM WELCOME, ALWAYS.</span><svg className="hero-sparkle" viewBox="0 0 70 70" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M35 0v70M0 35h70M10 10l50 50M10 60l50-50" /></svg></div></section><div className="values-strip"><div className="shell values-inner"><span><Cup /> A proper local brew</span><i aria-hidden="true">✳</i><span><Icon name="heart" /> Familiar flavours, made with heart</span><i aria-hidden="true">✳</i><span><Icon name="sun" /> A good day starts here</span></div></div></>
+}
+
+function About() {
+  return <section className="about shell section-space" id="about" aria-labelledby="about-title"><div><p className="eyebrow">01 / A LITTLE ABOUT US</p><h2 id="about-title">Your usual spot.<br /><em>Even on your first visit.</em></h2></div><div className="about-copy"><p>Some places just feel familiar. The smell of freshly brewed kopi. Toast with just the right crunch. A friendly face that makes you feel at home.</p><p>That’s the feeling behind Fruit Punchy Kopi & Co. A welcoming neighbourhood café at Bukit Timah Shopping Centre, bringing people together over the local flavours we all grew up loving.</p><a className="text-link" href="#contact">Pull up a chair. You’re in good company. <Icon /></a></div></section>
+}
+
+const menu = [
+  { name: 'Signature Kopi', price: '2.80', category: 'THE DAILY RITUAL', image: 'kopi', alt: 'A ceramic cup of traditional local kopi, shown as an illustrative serving', description: 'Bold, fragrant local coffee with a swirl of condensed milk. Your morning, made better.' },
+  { name: 'Kaya Toast Set', price: '6.50', category: 'A BREAKFAST CLASSIC', image: 'kaya', alt: 'Kaya toast with butter, soft-boiled eggs and coffee; illustrative serving from another café', description: 'Crisp kaya and butter toast, soft-boiled eggs, and a comforting cup of kopi. The perfect trio.' },
+  { name: 'Uncle’s Laksa', price: '8.90', category: 'COMFORT IN A BOWL', image: 'laksa', alt: 'A bowl of Katong-style laksa with coconut broth and noodles; illustrative serving', description: 'Rich coconut-spiced broth, slurp-worthy noodles, and prawns. A little warmth in every spoonful.' },
+]
+
+function Menu() {
+  return <section className="menu-section section-space" id="menu" aria-labelledby="menu-title"><div className="shell"><div className="menu-heading"><div><p className="eyebrow">02 / FROM OUR KITCHEN</p><h2 id="menu-title">A little taste <em>of home.</em></h2></div><p>Simple pleasures. Familiar favourites. <br />Something good for every kind of day.</p></div><div className="menu-grid">{menu.map((item, index) => <article className="menu-card" key={item.name}><div className="menu-image"><img src={`/images/${item.image}.webp`} alt={item.alt} width="800" height="600" loading="lazy" decoding="async" /><span className="menu-number">0{index + 1}</span></div><p className="menu-category">{item.category}</p><div className="menu-item-heading"><h3>{item.name}</h3><span className="price"><small>S$</small>{item.price}</span></div><p className="menu-description">{item.description}</p></article>)}</div><div className="menu-note"><span className="preview-pill">MENU PREVIEW</span><p>Sample dishes and proposed prices. Photography is illustrative.</p></div></div></section>
+}
+
+function Visit() {
+  return <section className="visit-section" id="contact" aria-labelledby="contact-title"><div className="shell visit-inner"><div className="visit-intro"><p className="eyebrow">03 / YOUR NEXT KOPI STOP</p><h2 id="contact-title">The kettle’s on.<br /><em>Come on over.</em></h2><p>A quick kopi, a catch-up, or a quiet moment<br className="desktop-break" /> to yourself. There’s a place for you here.</p><a className="button button-light" href={directions} target="_blank" rel="noopener noreferrer">Get directions <Icon /></a><span className="map-hint">Opens Bukit Timah Shopping Centre in Google Maps</span></div><div className="visit-details"><div className="visit-detail"><div className="detail-label"><Icon name="pin" /><h3>Find our corner</h3></div><address>Bukit Timah Shopping Centre<br />170 Upper Bukit Timah Road<br />Singapore 588179</address><p className="detail-note">Café unit number to be confirmed.</p></div><div className="visit-detail"><div className="detail-label"><Icon name="clock" /><h3>Make time for kopi</h3></div><dl className="hours"><div><dt>Monday – Friday</dt><dd>8am – 6pm</dd></div><div><dt>Saturday – Sunday</dt><dd>8am – 5pm</dd></div></dl><p className="detail-note">Proposed opening hours. Please check back for confirmation.</p></div></div><span className="visit-flower" aria-hidden="true">✳</span></div></section>
+}
+
+function Footer() {
+  return <footer className="shell site-footer"><div className="footer-main"><Brand footer /><p>A warm welcome. A proper local brew.<br />A familiar corner.</p><a className="back-top" href="#top">Back to top <Icon /></a></div><div className="footer-bottom"><p>© {new Date().getFullYear()} Fruit Punchy Kopi & Co.</p><p>Made for the neighbourhood. With heart.</p><details className="photo-credits"><summary>Photo credits</summary><div><p>Representative imagery; not photographs of Fruit Punchy Kopi & Co.</p><p>Café interior: Unsplash. Food photographs from Wikimedia Commons, cropped and colour adjusted. <a href="/photo-credits.txt" target="_blank" rel="noopener noreferrer">View photographers, sources and licences ↗</a></p></div></details></div></footer>
+}
+
+function App() {
+  return <><a className="skip-link" href="#main">Skip to content</a><div id="top" /><Header /><main id="main"><Hero /><About /><Menu /><Visit /></main><Footer /></>
+}
+
+createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>)
