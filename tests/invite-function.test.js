@@ -39,23 +39,23 @@ function request({ token = 'valid-token', origin = 'https://fruit-punchy-kopi-co
   return new Request('https://project.supabase.co/functions/v1/invite-staff', { method: 'POST', headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 }
 
-test('anonymous, forged, unverified and member requests cannot create staff invitations', async () => {
+test('invalid staff codes cannot create invitations regardless of bearer identity', async () => {
   for (const options of [{ user: null }, { user: { id: 'unverified' }, role: 'admin' }, { user: verified, role: 'member' }, { user: verified, role: 'staff' }]) {
     const { handler, counts } = await handlerFor(options)
-    assert.ok([401, 403].includes((await handler(request())).status))
+    assert.equal((await handler(request({body:{email:'staff@example.test',display_name:'Staff',authorization_code:'wrong-code'}}))).status,403)
     assert.deepEqual(counts(), { sends: 0, writes: 0 })
   }
   const { handler, counts } = await handlerFor({ user: verified, role: 'admin' })
-  assert.equal((await handler(request({ token: '' }))).status, 401)
+  assert.equal((await handler(request({ token: '', body:{email:'staff@example.test',display_name:'Staff'} }))).status, 403)
   assert.deepEqual(counts(), { sends: 0, writes: 0 })
 })
 
-test('only a verified owner can send a valid staff invitation', async () => {
-  const { handler, counts } = await handlerFor({ user: verified, role: 'admin' })
+test('the correct server-checked code allows invitations without owner sign-in', async () => {
+  const { handler, counts } = await handlerFor()
   assert.equal((await handler(request({ origin: 'https://untrusted.example' }))).status, 403)
-  assert.equal((await handler(request({ body: { email: 'bad-address', display_name: 'Staff', role: 'admin' } }))).status, 400)
+  assert.equal((await handler(request({ body: { email: 'bad-address', display_name: 'Staff', authorization_code:testCode } }))).status, 400)
   assert.deepEqual(counts(), { sends: 0, writes: 0 })
-  const response = await handler(request())
+  const response = await handler(request({token:''}))
   assert.equal(response.status, 200)
   assert.match((await response.json()).message, /email verification/)
   assert.deepEqual(counts(), { sends: 1, writes: 1 })
@@ -71,7 +71,7 @@ test('email-provider failure is reported as failure and repeated invites are thr
   assert.deepEqual(throttled.counts(), { sends: 0, writes: 0 })
 })
 
-test('even the owner must supply the staff code before any database write or email', async () => {
+test('a valid staff code is required before any database write or email', async () => {
   const { handler, counts } = await handlerFor({ user: verified, role: 'admin' })
   for (const authorization_code of [undefined, '', 'wrong-code', 'x'.repeat(129)]) {
     const response = await handler(request({body: {email:'staff@example.test', display_name:'Staff', authorization_code}}))
@@ -81,4 +81,14 @@ test('even the owner must supply the staff code before any database write or ema
   const unconfigured = await handlerFor({user:verified, role:'admin', codeHash:''})
   assert.equal((await unconfigured.handler(request())).status,503)
   assert.deepEqual(unconfigured.counts(), {sends:0,writes:0})
+})
+
+test('code validation sends no email and never bypasses the invitation code check', async () => {
+  const {handler,counts} = await handlerFor()
+  const result = await handler(request({token:'',body:{action:'validate-code',authorization_code:testCode}}))
+  assert.equal(result.status,200)
+  assert.equal((await result.json()).valid,true)
+  assert.deepEqual(counts(),{sends:0,writes:0})
+  assert.equal((await handler(request({token:'',body:{email:'staff@example.test',display_name:'Staff',authorization_code:'wrong-code'}}))).status,403)
+  assert.deepEqual(counts(),{sends:0,writes:0})
 })

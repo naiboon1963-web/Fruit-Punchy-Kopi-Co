@@ -13,7 +13,6 @@ minimum_password_length = 12
 enable_confirmations = true
 
 [functions.invite-staff]
-# The handler validates the user's bearer JWT with auth.getUser(), verifies
-# their confirmed email and checks their server-managed admin role itself.
-# Disabling the legacy gateway check supports current asymmetric signing keys.
+# The handler authorizes invitations using the server-only staff-code hash.
+# An owner session is not required. All database work remains server-side.
 verify_jwt = false

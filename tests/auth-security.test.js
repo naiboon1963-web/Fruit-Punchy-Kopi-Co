@@ -27,6 +27,7 @@ test('database enforces email verification and prevents client role escalation',
       grant execute on function auth.uid() to anon, authenticated, service_role;
     `)
     await db.exec(await readFile(new URL('../supabase/migrations/202611140001_members_and_staff.sql', import.meta.url), 'utf8'))
+    await db.exec(await readFile(new URL('../supabase/migrations/202611140002_code_authorized_staff_invitations.sql', import.meta.url), 'utf8'))
     await db.query(`insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data) values
       ($1, 'member@example.test', now(), '{"display_name":"Member","role":"admin"}'),
       ($2, 'pending@example.test', null, '{"role":"staff"}'),

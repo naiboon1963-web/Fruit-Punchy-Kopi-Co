@@ -7,13 +7,13 @@ Project: `cmsnlbvkxwsbzankxxts`.
 - Public member registration with name, email and password (12-character minimum).
 - Verification email, verification resend, sign-in, sign-out and password reset.
 - Verified member profile and staff dashboard, with editable display name.
-- Owner dashboard with staff email invitations. New staff follow their email
+- Code-authorized staff creation without owner sign-in. New staff follow their email
   link, verify their email and choose a password. Existing verified members can
   be approved as staff without creating a duplicate account.
 - Database-enforced access: unverified users cannot read profiles; users can
   read only their own profile and update only their own name. Browser metadata
-  cannot grant roles. Staff approvals are restricted to a verified admin in the
-  Edge Function and resolved against server-managed database roles.
+  cannot grant roles. Staff approvals require the correct server-checked staff authorization code.
+  Browser flags and metadata cannot authorize invitations.
 
 ## Configure the project
 
@@ -51,8 +51,8 @@ Project: `cmsnlbvkxwsbzankxxts`.
 
    `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are supplied by the Supabase
    Edge runtime. The service-role key is **never** sent to the website. The
-   function verifies the bearer JWT with `auth.getUser()` and checks the admin
-   role itself, so `verify_jwt = false` only disables the legacy gateway check.
+   function verifies the separate staff authorization code itself; owner sign-in
+   is not required. `verify_jwt = false` allows this code-authorized flow.
    The function defaults to the production website origin. If the domain changes,
    set its `SITE_URL` secret to the new canonical origin before deploying.
 7. Put the public URL and public publishable/legacy anon key into `.env.local`
@@ -80,14 +80,16 @@ The four account pages are:
 
 - Member creation: `/?account=join`
 - Member login: `/?account=signin`
-- Owner-only staff creation: `/?account=staff-create`
+- Code-authorized staff creation: `/?account=staff-create`
 - Staff sign-in: `/?account=staff`
 
 When the public Supabase configuration is absent, these pages remain viewable
 but submission is disabled with an activation-pending notice. Do not enable the
 Vercel account configuration until the database and email delivery are ready.
 
-The owner signs in → enters the staff name/email and staff authorization code → sends an invitation. The
+The staff creator enters a name, email and staff authorization code. The button
+is enabled only after the code is confirmed by Supabase; the invitation request
+checks the code again independently. Owner sign-in is not required. The
 staff member clicks the email link → chooses a password → enters the staff
 dashboard. Merely receiving an invitation does not grant access. Auth must
 record the email as confirmed before the trigger grants the staff role.
@@ -97,8 +99,8 @@ owner's ignored `.env.smtp.local` file. This is not the Gmail App Password. Only
 its SHA-256 hash is stored as the Edge Function secret `STAFF_CREATION_CODE_HASH`;
 neither the staff code nor the SMTP password belongs in Vite or Git. The server
 rejects missing/incorrect codes before creating an invitation or sending email,
-and rejects all invitations if the code secret is absent. The owner role and
-verified email are still required even with the correct code. Rotate the code
+and rejects all invitations if the code secret is absent. The code authorizes invitation creation without an owner session. New staff
+still require email verification before accessing their profile. Rotate the code
 by generating a fresh random value locally, updating the server hash, and
 replacing the local value. No browser redeploy is needed for a code rotation.
 
@@ -120,10 +122,11 @@ Use owner-controlled test addresses for these checks:
    until its verification link is opened. Test the link from a second browser.
 2. Resend verification and test an expired link.
 3. Verify password reset and invited staff password setup.
-4. As owner, invite a new staff address. Confirm that profile access is blocked
+4. Using the staff authorization code, invite a new staff address. Confirm that profile access is blocked
    before verification and the role becomes staff afterwards.
-5. As a member, try to update `role`, read another profile or invoke the staff
-   invitation function. All must be denied.
+5. Try to update `role` or read another profile as a member; both must be denied.
+   Try sending an invitation with a missing or incorrect staff code; it must be
+   denied even after a previous successful code-validation request.
 6. Confirm sign-out, name changes and mobile keyboard navigation.
 
 Local security tests run with `pnpm test:security`; they exercise the actual SQL

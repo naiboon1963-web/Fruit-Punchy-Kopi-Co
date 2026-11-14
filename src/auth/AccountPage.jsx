@@ -110,7 +110,7 @@ export default function AccountPage() {
       {!authConfigured && <Notice>Account activation is pending. You can view the forms below; registration, sign-in and invitation emails will be available once Supabase setup is complete.</Notice>}
       {authConfigured && !emailDeliveryReady && <Notice>Supabase is connected. New registrations, verification emails and staff invitations will open once our email sender is ready. Existing verified accounts can sign in.</Notice>}
       {loading ? <><h2 id="account-heading">One moment…</h2><p role="status">Checking your account securely.</p></>
-      : view === 'staff-create' ? <StaffCreation user={user} />
+      : view === 'staff-create' ? <StaffCreation />
       : user && verified && !settingPassword ? <Dashboard user={user} requireStaff={view === 'staff'} />
       : <>
         <p className="eyebrow">{view === 'staff' ? 'FOR OUR CAFÉ TEAM' : 'WELCOME TO THE NEIGHBOURHOOD'}</p>
@@ -196,29 +196,42 @@ function Dashboard({ user, requireStaff = false }) {
   </>
 }
 
-function StaffCreation({ user }) {
-  const [authorized, setAuthorized] = useState(false)
-  const [checking, setChecking] = useState(Boolean(user?.email_confirmed_at))
-  useEffect(() => {
-    let active = true
-    if (!supabase || !user?.email_confirmed_at) { setAuthorized(false); setChecking(false); return }
-    setChecking(true)
-    supabase.from('profiles').select('role').eq('id', user.id).single().then(({ data, error }) => {
-      if (active) { setAuthorized(!error && data?.role === 'admin'); setChecking(false) }
-    }).catch(() => { if (active) { setAuthorized(false); setChecking(false) } })
-    return () => { active = false }
-  }, [user?.id, user?.email_confirmed_at])
-  return <><p className="eyebrow">OWNER-ONLY STAFF CREATION</p><h2 id="account-heading">Create a staff account.</h2><p>Invite someone to the Fruit Punchy team. They’ll verify their email and choose their own password using a personal invitation link.</p><ol className="staff-steps"><li>Owner enters the staff name, email and authorization code.</li><li>Staff member opens the verification email.</li><li>Staff member sets a password and signs in.</li></ol>{checking ? <p role="status">Checking owner access…</p> : !authorized && <Notice>{user ? 'Only the verified café owner can create staff accounts.' : 'Sign in with the verified owner account to send staff invitations.'} <a href={accountUrl('staff')}>Owner sign-in →</a></Notice>}<StaffInvitations disabled={!authConfigured || !authorized || checking} /></>
+function StaffCreation() {
+  return <><p className="eyebrow">JOIN THE FRUIT PUNCHY TEAM</p><h2 id="account-heading">Create a staff account.</h2><p>Enter the staff name, email and authorization code. Once the code is confirmed, you can send a personal invitation.</p><ol className="staff-steps"><li>Enter the staff details and authorization code.</li><li>Send the invitation after the code is confirmed.</li><li>The staff member verifies their email and chooses a password.</li></ol><StaffInvitations disabled={!authConfigured} /></>
 }
 
 function StaffInvitations({ disabled = false }) {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [authorizationCode, setAuthorizationCode] = useState('')
+  const [validatedCode, setValidatedCode] = useState('')
+  const [codeState, setCodeState] = useState('idle')
+  const [codeError, setCodeError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    setValidatedCode(''); setCodeError('')
+    const code = authorizationCode.trim()
+    if (!code || !supabase || disabled || !emailDeliveryReady) { setCodeState('idle'); return }
+    setCodeState('checking')
+    const timer = setTimeout(async () => {
+      try {
+        const { data, error: validationError } = await supabase.functions.invoke('invite-staff', { body: { action: 'validate-code', authorization_code: code } })
+        if (!active) return
+        if (validationError || !data?.valid) { setCodeState('invalid'); setCodeError('The authorization code could not be confirmed. Check it and try again.') }
+        else { setValidatedCode(code); setCodeState('valid') }
+      } catch { if (active) { setCodeState('invalid'); setCodeError('Unable to check the code. Please try again.') } }
+    }, 500)
+    return () => { active = false; clearTimeout(timer) }
+  }, [authorizationCode, disabled])
+  const canInvite = Boolean(authConfigured && emailDeliveryReady && !disabled && name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && validatedCode && validatedCode === authorizationCode.trim())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
   async function invite(event) {
     event.preventDefault()
-    if (disabled || !supabase || busy || !emailDeliveryReady) return
+    if (!canInvite || !supabase || busy) return
     setBusy(true); setError(''); setMessage('')
     const form = event.currentTarget
     const values = new FormData(form)
@@ -229,10 +242,10 @@ function StaffInvitations({ disabled = false }) {
         throw new Error(details?.error || 'The invitation could not be sent. Check the email address and try again.')
       }
       if (data?.error) throw new Error(data.error)
-      setMessage(data.message || 'Invitation sent. Staff access starts after email verification.'); form.reset()
+      setMessage(data.message || 'Invitation sent. Staff access starts after email verification.'); form.reset(); setName(''); setEmail(''); setAuthorizationCode(''); setValidatedCode('')
     } catch (inviteError) { setError(inviteError.message || 'Unable to invite staff. Please try again.') }
     finally { setBusy(false) }
   }
 
-  return <section className="staff-invitations" aria-labelledby="staff-invite-title"><h3 id="staff-invite-title">Staff details</h3><p>We’ll send a personal invitation. New staff verify their email and choose a password before getting access.</p><Notice error>{error}</Notice><Notice>{message}</Notice><form className="account-form" onSubmit={invite}><label>Staff name<input name="name" autoComplete="off" maxLength={100} required /></label><label>Staff email<input name="email" type="email" autoComplete="off" maxLength={254} required /></label><label>Staff authorization code<input name="authorization_code" type="password" autoComplete="off" maxLength={128} required /></label><p className="account-field-hint">Enter the separate staff code provided by the café owner.</p><button className="button" disabled={busy || disabled || !emailDeliveryReady}>{busy ? 'Sending…' : 'Send staff invitation'}</button></form></section>
+  return <section className="staff-invitations" aria-labelledby="staff-invite-title"><h3 id="staff-invite-title">Staff details</h3><p>We’ll send a personal invitation. New staff verify their email and choose a password before getting access.</p><Notice error>{error}</Notice><Notice>{message}</Notice><form className="account-form" onSubmit={invite}><label>Staff name<input name="name" autoComplete="off" maxLength={100} value={name} onChange={event => setName(event.target.value)} required /></label><label>Staff email<input name="email" type="email" autoComplete="off" maxLength={254} value={email} onChange={event => setEmail(event.target.value)} required /></label><label>Staff authorization code<input name="authorization_code" type="password" autoComplete="off" maxLength={128} value={authorizationCode} onChange={event => setAuthorizationCode(event.target.value)} aria-describedby="staff-code-feedback" aria-invalid={codeState === 'invalid'} required /></label><p className="account-field-hint" id="staff-code-feedback" role="status">{codeState === 'checking' ? 'Checking authorization code…' : codeState === 'valid' && validatedCode === authorizationCode.trim() ? 'Authorization code confirmed.' : codeError || 'Enter the separate staff code provided by the café owner.'}</p><button className="button" disabled={busy || !canInvite}>{busy ? 'Sending…' : 'Send staff invitation'}</button></form></section>
 }

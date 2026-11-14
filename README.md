@@ -28,7 +28,7 @@ The owner-supplied logo is preserved in `public/images/fruit-punchy-logo-origina
 ## Member and staff accounts
 
 The Supabase integration adds member email/password registration and verification,
-password recovery, verified profiles, and owner-approved staff email invitations.
+password recovery, verified profiles, and code-authorized staff email invitations.
 See `supabase/SETUP.md` for migration, email delivery, redirect URL, Edge Function,
 and first-owner setup. Staff roles are assigned by the server after email
 verification; clients can update only their own display name.
