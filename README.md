@@ -1,6 +1,6 @@
 # Fruit Punchy Kopi and Art
 
-A responsive neighbourhood café website built with React, Vite, and Tailwind CSS. Rebranded as Fruit Punchy Kopi and Art, with terracotta and parchment colours, vintage lettering, and the tagline “Every table has a story.”
+A responsive neighbourhood café website built with React, Vite, and Tailwind CSS. Rebranded as Fruit Punchy Kopi and Art, around the owner’s hand-painted fruit-character logo, with soft mint, mango yellow, berry red, warm cream, and the tagline “A little kopi. A lot of colour.”
 
 ## Development
 
@@ -22,3 +22,5 @@ Import this repository into Vercel with the Vite framework preset, or run `verce
 The menu and prices (S$2.80, S$6.50, S$8.90), recipes, business hours, café unit number, and final photography remain proposals from the PRD. The preview explicitly identifies those details. Replace the representative imagery and confirm the business information before using the website as an official business listing.
 
 Image attribution and licences are provided in `public/photo-credits.txt` and linked from the footer. Fonts are self-hosted under their SIL Open Font Licences, included in `public/fonts/`.
+
+The owner-supplied logo is preserved in `public/images/fruit-punchy-logo-original.png`. The web version preserves the full updated picture, including its lettering and artwork, and converts it to WebP. The favicon uses the small fruit characters from that picture. The same artwork is used in the header, hero, footer and favicon.

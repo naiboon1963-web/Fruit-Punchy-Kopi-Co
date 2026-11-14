@@ -21,7 +21,12 @@ function Cup({ className = '' }) {
 }
 
 function Brand({ footer = false, onClick }) {
-  return <a href="#top" className={`brand ${footer ? 'brand-footer' : ''}`} aria-label="Fruit Punchy Kopi and Art — back to top" onClick={onClick}><Cup className="brand-cup" /><span>Fruit Punchy<span className="brand-second">Kopi and Art<span className="brand-dot">✳</span></span></span></a>
+  return (
+    <a href="#top" className={`brand ${footer ? 'brand-footer' : ''}`} aria-label="Fruit Punchy Kopi and Art — back to top" onClick={onClick}>
+      <img className="brand-mascots" src="/images/fruit-punchy-logo.webp" alt="" width="818" height="392" />
+      <span>Fruit Punchy<span className="brand-second">KOPI AND ART</span></span>
+    </a>
+  )
 }
 
 function Header() {
@@ -41,11 +46,39 @@ function Header() {
 }
 
 function Hero() {
-  return <><section className="hero shell" aria-labelledby="hero-title"><div className="hero-copy"><p className="eyebrow"><span className="tiny-flower">✳</span> TOAST, KOPI & A LITTLE CONVERSATION</p><h1 id="hero-title">Every table<br />has a <em>story.</em></h1><p className="hero-description">Golden toast, proper kopi, and tales worth sharing.<br className="desktop-break" /> Pull up a chair at Fruit Punchy Kopi and Art.</p><a className="button" href="#menu">Find your favourite <Icon /></a><a className="hero-location" href="#contact"><Icon name="pin" /> A little corner of Bukit Timah, Singapore</a></div><div className="hero-art"><div className="arch-frame"><img src="/images/cafe.webp" alt="Cosy outdoor café tables on a sunlit street; illustrative atmosphere, not the actual café" width="920" height="1120" fetchPriority="high" /><div className="photo-caption"><span>TAKE A BREATHER.</span><span>STAY A LITTLE LONGER.</span></div></div><div className="round-stamp" aria-label="Good kopi, good company"><span>GOOD KOPI</span><Cup /><span>GOOD COMPANY</span></div><span className="hero-side-note" aria-hidden="true">A NEW STORY, EVERY DAY.</span><svg className="hero-sparkle" viewBox="0 0 70 70" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M35 0v70M0 35h70M10 10l50 50M10 60l50-50" /></svg></div></section><div className="values-strip"><div className="shell values-inner"><span><Cup /> A proper local brew</span><i aria-hidden="true">✳</i><span><Icon name="heart" /> Familiar flavours, made with heart</span><i aria-hidden="true">✳</i><span><Icon name="sun" /> A good day starts here</span></div></div></>
+  return (
+    <>
+      <section className="hero-section" aria-labelledby="hero-title">
+        <div className="hero shell">
+          <div className="hero-copy">
+            <p className="eyebrow"><span className="tiny-flower" aria-hidden="true">✳</span> A HAPPY LITTLE NEIGHBOURHOOD HANGOUT</p>
+            <h1 id="hero-title">A little kopi.<br /><em>A lot of colour.</em></h1>
+            <p className="hero-description">Familiar flavours. Curious little moments. Good company.<br className="desktop-break" /> Welcome to Fruit Punchy Kopi and Art —<br className="desktop-break" /> a cosy corner with a playful heart.</p>
+            <div className="hero-actions"><a className="button" href="#menu">Find your favourite <Icon /></a><a className="secondary-link" href="#about">Meet our little corner <span aria-hidden="true">↗</span></a></div>
+            <a className="hero-location" href="#contact"><Icon name="pin" /> Made for the neighbourhood. Find us in Bukit Timah.</a>
+          </div>
+          <div className="hero-art">
+            <span className="paint-dot paint-dot-blue" aria-hidden="true" /><span className="paint-dot paint-dot-red" aria-hidden="true" />
+            <span className="art-handnote">a little quirky.<br />a little fruity.<br />all heart.</span>
+            <div className="mascot-stage"><img src="/images/fruit-punchy-logo.webp" alt="Fruit Punchy Studio logo artwork with colourful lettering and two hand-painted yellow and red fruit characters" width="818" height="392" fetchPriority="high" /></div>
+            <div className="art-sticker"><span aria-hidden="true">✳</span> Good kopi.<br /><strong>Even better company.</strong></div>
+            <svg className="art-doodle" viewBox="0 0 100 110" fill="none" aria-hidden="true"><path d="M65 7c40 38 15 68-37 65m0 0 18-16M28 72l19 13M13 17l8 8M31 6l-2 12M5 39l15-2" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </div>
+        </div>
+        <div className="hero-bottom-note"><span aria-hidden="true">✿</span> A warm cup. A full heart. A splash of imagination. <span aria-hidden="true">✿</span></div>
+      </section>
+      <div className="values-strip"><div className="shell values-inner"><span><Cup /> Proper local kopi</span><i aria-hidden="true">✳</i><span><Icon name="heart" /> Comfort food, happy hearts</span><i aria-hidden="true">✳</i><span><Icon name="sun" /> A little everyday inspiration</span></div></div>
+    </>
+  )
 }
 
 function About() {
-  return <section className="about shell section-space" id="about" aria-labelledby="about-title"><div><p className="eyebrow">01 / OUR STORY SO FAR</p><h2 id="about-title">A little toast.<br /><em>A tale or two.</em></h2></div><div className="about-copy"><p>The best stories start with something simple. Golden kaya toast. A freshly brewed kopi. A familiar face across the table, and a little time to catch up.</p><p>Welcome to Fruit Punchy Kopi and Art, your neighbourhood café at Bukit Timah Shopping Centre. We bring people together over the local flavours we grew up loving, with a warm welcome and room for one more story.</p><a className="text-link" href="#contact">Come with a story. Leave with a smile. <Icon /></a></div></section>
+  return (
+    <section className="about shell section-space" id="about" aria-labelledby="about-title">
+      <div className="about-title"><p className="eyebrow">HELLO, WE’RE FRUIT PUNCHY</p><h2 id="about-title">A familiar corner.<br /><em>A colourful soul.</em></h2><span className="little-note"><span aria-hidden="true">✿</span> Come as you are. Stay a little.</span></div>
+      <div className="about-copy"><p>We believe the best little moments come with a good cup of kopi, something comforting to eat, and space to let your mind wander.</p><p>That’s the spirit of Fruit Punchy Kopi and Art. A welcoming neighbourhood café at Bukit Timah Shopping Centre, full of familiar local flavours and a love for the colourful side of everyday life.</p><a className="text-link" href="#contact">Pull up a chair. Make yourself at home. <Icon /></a></div>
+    </section>
+  )
 }
 
 const menu = [
@@ -55,19 +88,19 @@ const menu = [
 ]
 
 function Menu() {
-  return <section className="menu-section section-space" id="menu" aria-labelledby="menu-title"><div className="shell"><div className="menu-heading"><div><p className="eyebrow">02 / FAVOURITES WORTH SHARING</p><h2 id="menu-title">Good food. <em>Better stories.</em></h2></div><p>Simple pleasures. Familiar favourites. <br />Something good for every kind of day.</p></div><div className="menu-grid">{menu.map((item, index) => <article className="menu-card" key={item.name}><div className="menu-image"><img src={`/images/${item.image}.webp`} alt={item.alt} width="800" height="600" loading="lazy" decoding="async" /><span className="menu-number">0{index + 1}</span></div><p className="menu-category">{item.category}</p><div className="menu-item-heading"><h3>{item.name}</h3><span className="price"><small>S$</small>{item.price}</span></div><p className="menu-description">{item.description}</p></article>)}</div><div className="menu-note"><span className="preview-pill">MENU PREVIEW</span><p>Sample dishes and proposed prices. Photography is illustrative.</p></div></div></section>
+  return <section className="menu-section section-space" id="menu" aria-labelledby="menu-title"><div className="shell"><div className="menu-heading"><div><p className="eyebrow">LITTLE PLATES, BIG COMFORT</p><h2 id="menu-title">Happiness, <em>served simply.</em></h2></div><p>A few familiar favourites to brighten your day.<br />Made for slow sips and happy little catch-ups.</p></div><div className="menu-grid">{menu.map((item, index) => <article className="menu-card" key={item.name}><div className="menu-image"><img src={`/images/${item.image}.webp`} alt={item.alt} width="800" height="600" loading="lazy" decoding="async" /><span className="menu-number">0{index + 1}</span></div><p className="menu-category">{item.category}</p><div className="menu-item-heading"><h3>{item.name}</h3><span className="price"><small>S$</small>{item.price}</span></div><p className="menu-description">{item.description}</p></article>)}</div><div className="menu-note"><span className="preview-pill">MENU PREVIEW</span><p>Sample dishes and proposed prices. Photography is illustrative.</p></div></div></section>
 }
 
 function Visit() {
-  return <section className="visit-section" id="contact" aria-labelledby="contact-title"><div className="shell visit-inner"><div className="visit-intro"><p className="eyebrow">03 / YOUR NEXT CHAPTER STARTS HERE</p><h2 id="contact-title">A seat for you.<br /><em>A story to share.</em></h2><p>A quick kopi, a catch-up, or a quiet moment<br className="desktop-break" /> to yourself. There’s a place for you here.</p><a className="button button-light" href={directions} target="_blank" rel="noopener noreferrer">Get directions <Icon /></a><span className="map-hint">Opens Bukit Timah Shopping Centre in Google Maps</span></div><div className="visit-details"><div className="visit-detail"><div className="detail-label"><Icon name="pin" /><h3>Find our corner</h3></div><address>Bukit Timah Shopping Centre<br />170 Upper Bukit Timah Road<br />Singapore 588179</address><p className="detail-note">Café unit number to be confirmed.</p></div><div className="visit-detail"><div className="detail-label"><Icon name="clock" /><h3>Make time for kopi</h3></div><dl className="hours"><div><dt>Monday – Friday</dt><dd>8am – 6pm</dd></div><div><dt>Saturday – Sunday</dt><dd>8am – 5pm</dd></div></dl><p className="detail-note">Proposed opening hours. Please check back for confirmation.</p></div></div><span className="visit-flower" aria-hidden="true">✳</span></div></section>
+  return <section className="visit-section" id="contact" aria-labelledby="contact-title"><div className="shell visit-inner"><div className="visit-intro"><p className="eyebrow">COME FIND YOUR HAPPY CORNER</p><h2 id="contact-title">Your seat’s waiting.<br /><em>Kopi, anyone?</em></h2><p>A quick kopi, a catch-up, or a quiet moment<br className="desktop-break" /> to yourself. There’s a place for you here.</p><a className="button button-light" href={directions} target="_blank" rel="noopener noreferrer">Get directions <Icon /></a><span className="map-hint">Opens Bukit Timah Shopping Centre in Google Maps</span></div><div className="visit-details"><div className="visit-detail"><div className="detail-label"><Icon name="pin" /><h3>Find our corner</h3></div><address>Bukit Timah Shopping Centre<br />170 Upper Bukit Timah Road<br />Singapore 588179</address><p className="detail-note">Café unit number to be confirmed.</p></div><div className="visit-detail"><div className="detail-label"><Icon name="clock" /><h3>Make time for kopi</h3></div><dl className="hours"><div><dt>Monday – Friday</dt><dd>8am – 6pm</dd></div><div><dt>Saturday – Sunday</dt><dd>8am – 5pm</dd></div></dl><p className="detail-note">Proposed opening hours. Please check back for confirmation.</p></div></div><span className="visit-flower" aria-hidden="true">✳</span></div></section>
 }
 
 function Footer() {
-  return <footer className="shell site-footer"><div className="footer-main"><Brand footer /><p>Every table has a story.<br />We’d love to hear yours.</p><a className="back-top" href="#top">Back to top <Icon /></a></div><div className="footer-bottom"><p>© {new Date().getFullYear()} Fruit Punchy Kopi and Art</p><p>Good kopi. Good company. Your neighbourhood.</p><details className="photo-credits"><summary>Photo credits</summary><div><p>Representative imagery; not photographs of Fruit Punchy Kopi and Art</p><p>Café atmosphere: Unsplash. Food photographs from Wikimedia Commons, cropped and colour adjusted. <a href="/photo-credits.txt" target="_blank" rel="noopener noreferrer">View photographers, sources and licences ↗</a></p></div></details></div></footer>
+  return <footer className="shell site-footer"><div className="footer-main"><Brand footer /><p>A little kopi. A lot of colour.<br />Always room for one more.</p><a className="back-top" href="#top">Back to top <Icon /></a></div><div className="footer-bottom"><p>© {new Date().getFullYear()} Fruit Punchy Kopi and Art</p><p>Made with a playful heart, for our neighbourhood.</p><details className="photo-credits"><summary>Photo credits</summary><div><p>Representative imagery; not photographs of Fruit Punchy Kopi and Art</p><p>Café atmosphere: Unsplash. Food photographs from Wikimedia Commons, cropped and colour adjusted. <a href="/photo-credits.txt" target="_blank" rel="noopener noreferrer">View photographers, sources and licences ↗</a></p></div></details></div></footer>
 }
 
 function App() {
-  return <><a className="skip-link" href="#main">Skip to content</a><div id="top" /><Header /><main id="main"><Hero /><About /><Menu /><Visit /></main><Footer /></>
+  return <><a className="skip-link" href="#main">Skip to content</a><div id="top" /><div className="announcement"><span aria-hidden="true">✳</span> A colourful little corner of Bukit Timah.</div><Header /><main id="main"><Hero /><About /><Menu /><Visit /></main><Footer /></>
 }
 
 createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>)

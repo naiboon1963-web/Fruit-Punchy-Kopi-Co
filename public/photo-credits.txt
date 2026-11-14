@@ -28,3 +28,5 @@ Source: https://commons.wikimedia.org/wiki/File:Bowl_of_Katong_Laksa.jpg
 CC BY-SA 4.0: https://creativecommons.org/licenses/by-sa/4.0/
 Changes: resized, converted to WebP, cropped and colour adjusted for display.
 The adapted laksa image is also provided under CC BY-SA 4.0.
+
+Brand logo: supplied by the website owner. Original image retained as fruit-punchy-logo-original.png; web version preserves the full latest picture and converts it to WebP. The favicon crops the small fruit characters at the top left.
