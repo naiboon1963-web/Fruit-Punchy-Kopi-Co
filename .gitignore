@@ -6,3 +6,5 @@ dist/
 !.env.example
 tmp/
 *.local
+supabase/.temp/
+supabase/.branches/

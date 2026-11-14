@@ -24,3 +24,18 @@ The menu and prices (S$2.80, S$6.50, S$8.90), recipes, business hours, café uni
 Image attribution and licences are provided in `public/photo-credits.txt` and linked from the footer. Fonts are self-hosted under their SIL Open Font Licences, included in `public/fonts/`.
 
 The owner-supplied logo is preserved in `public/images/fruit-punchy-logo-original.png`. The web version preserves the full updated picture, including its lettering and artwork, and converts it to WebP. The favicon uses the small fruit characters from that picture. The same artwork is used in the header, hero, footer and favicon.
+
+## Member and staff accounts
+
+The Supabase integration adds member email/password registration and verification,
+password recovery, verified profiles, and owner-approved staff email invitations.
+See `supabase/SETUP.md` for migration, email delivery, redirect URL, Edge Function,
+and first-owner setup. Staff roles are assigned by the server after email
+verification; clients can update only their own display name.
+
+```sh
+pnpm test:security
+```
+
+Create `.env.local` from `.env.example` for local development. Only the public
+Supabase URL and publishable/legacy anon key belong in `VITE_` variables.

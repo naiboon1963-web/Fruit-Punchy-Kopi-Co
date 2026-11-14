@@ -1,0 +1,7 @@
+project_id = "fruit-punchy-kopi-and-art"
+
+[functions.invite-staff]
+# The handler validates the user's bearer JWT with auth.getUser(), verifies
+# their confirmed email and checks their server-managed admin role itself.
+# Disabling the legacy gateway check supports current asymmetric signing keys.
+verify_jwt = false

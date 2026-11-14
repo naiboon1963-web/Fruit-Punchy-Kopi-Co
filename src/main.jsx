@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles.css'
+import { AuthProvider, useAuth } from './auth/AuthContext'
+import AccountPage from './auth/AccountPage'
 
 const directions = 'https://www.google.com/maps/search/?api=1&query=Bukit+Timah+Shopping+Centre+170+Upper+Bukit+Timah+Road+Singapore+588179'
-const links = [['Our story', '#about'], ['The menu', '#menu'], ['Find us', '#contact']]
+const links = [['Our story', '/#about'], ['The menu', '/#menu'], ['Find us', '/#contact']]
 
 function Icon({ name = 'arrow', className = '', ...props }) {
   const paths = {
@@ -22,7 +24,7 @@ function Cup({ className = '' }) {
 
 function Brand({ footer = false, onClick }) {
   return (
-    <a href="#top" className={`brand ${footer ? 'brand-footer' : ''}`} aria-label="Fruit Punchy Kopi and Art — back to top" onClick={onClick}>
+    <a href={window.location.search.includes('account=') ? '/' : '#top'} className={`brand ${footer ? 'brand-footer' : ''}`} aria-label="Fruit Punchy Kopi and Art — back to top" onClick={onClick}>
       <img className="brand-mascots" src="/images/fruit-punchy-logo.webp" alt="" width="818" height="392" />
       <span>Fruit Punchy<span className="brand-second">KOPI AND ART</span></span>
     </a>
@@ -30,6 +32,7 @@ function Brand({ footer = false, onClick }) {
 }
 
 function Header() {
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const toggle = useRef(null)
   useEffect(() => {
@@ -42,7 +45,7 @@ function Header() {
     window.addEventListener('resize', closeOnDesktop)
     return () => { document.removeEventListener('keydown', closeOnEscape); window.removeEventListener('resize', closeOnDesktop) }
   }, [open])
-  return <header className="site-header"><div className="shell header-inner"><Brand onClick={() => setOpen(false)} /><button ref={toggle} className={`menu-toggle ${open ? 'is-open' : ''}`} aria-label={open ? 'Close navigation' : 'Open navigation'} aria-expanded={open} aria-controls="main-navigation" onClick={() => setOpen(!open)}><span /><span /></button><nav id="main-navigation" aria-label="Main navigation" className={open ? 'nav-open' : ''}>{links.map(([label, href]) => <a key={href} href={href} onClick={() => setOpen(false)}>{label}</a>)}<a className="nav-visit" href={directions} target="_blank" rel="noopener noreferrer">Come on over <Icon name="arrow" /></a></nav></div></header>
+  return <header className="site-header"><div className="shell header-inner"><Brand onClick={() => setOpen(false)} /><button ref={toggle} className={`menu-toggle ${open ? 'is-open' : ''}`} aria-label={open ? 'Close navigation' : 'Open navigation'} aria-expanded={open} aria-controls="main-navigation" onClick={() => setOpen(!open)}><span /><span /></button><nav id="main-navigation" aria-label="Main navigation" className={open ? 'nav-open' : ''}>{links.map(([label, href]) => <a key={href} href={href} onClick={() => setOpen(false)}>{label}</a>)}<a href="/?account=signin" onClick={() => setOpen(false)}>{user ? 'My account' : 'Members & staff'}</a><a className="nav-visit" href={directions} target="_blank" rel="noopener noreferrer">Come on over <Icon name="arrow" /></a></nav></div></header>
 }
 
 function Hero() {
@@ -99,8 +102,10 @@ function Footer() {
   return <footer className="shell site-footer"><div className="footer-main"><Brand footer /><p>A little kopi. A lot of colour.<br />Always room for one more.</p><a className="back-top" href="#top">Back to top <Icon /></a></div><div className="footer-bottom"><p>© {new Date().getFullYear()} Fruit Punchy Kopi and Art</p><p>Made with a playful heart, for our neighbourhood.</p><details className="photo-credits"><summary>Photo credits</summary><div><p>Representative imagery; not photographs of Fruit Punchy Kopi and Art</p><p>Café atmosphere: Unsplash. Food photographs from Wikimedia Commons, cropped and colour adjusted. <a href="/photo-credits.txt" target="_blank" rel="noopener noreferrer">View photographers, sources and licences ↗</a></p></div></details></div></footer>
 }
 
+const isAccountPage = new URLSearchParams(window.location.search).has('account') || new URLSearchParams(window.location.hash.slice(1)).has('access_token')
+
 function App() {
-  return <><a className="skip-link" href="#main">Skip to content</a><div id="top" /><div className="announcement"><span aria-hidden="true">✳</span> A colourful little corner of Bukit Timah.</div><Header /><main id="main"><Hero /><About /><Menu /><Visit /></main><Footer /></>
+  return <><a className="skip-link" href="#main">Skip to content</a><div id="top" /><div className="announcement"><span aria-hidden="true">✳</span> A colourful little corner of Bukit Timah.</div><Header />{isAccountPage ? <AccountPage /> : <main id="main"><Hero /><About /><Menu /><Visit /></main>}<Footer /></>
 }
 
-createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>)
+createRoot(document.getElementById('root')).render(<React.StrictMode><AuthProvider><App /></AuthProvider></React.StrictMode>)
