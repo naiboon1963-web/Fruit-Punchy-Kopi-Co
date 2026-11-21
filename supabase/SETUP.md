@@ -31,6 +31,10 @@ Configure the server-only secrets `ADMIN_PASSWORD_HASH` and `ADMIN_SESSION_SECRE
 
 Admin sessions last 15 minutes, remain in browser memory, and are discarded by the Lock administration button or a page reload. Login attempts are throttled in the database. Approval and staff promotion run transactionally and are recorded in `admin_private.member_actions`. Ordinary members and anonymous callers cannot execute these operations or read the private audit log. Staff promotion is available only after membership is Active; it preserves the member's existing login credentials.
 
+Admins can set a new 12–128 character password for a member or staff account through the server-only Auth admin API. Existing passwords cannot be displayed or retrieved. Setting a password does not approve an account or verify its email. Password values are never returned by the admin endpoint.
+
+Staff sign in at `/?account=staff`; `/staff` and its subpaths require Active status, verified email, and a current `staff` or `admin` profile role. The `staff-login` server action checks that role before releasing session tokens. Both member and staff account pages display username, full name, role, and logout.
+
 ## Access enforcement
 
 The server authenticates the password and then reads the current membership status. Pending users receive the requested error and no login tokens. Active users must also have a verified email. Database RLS independently blocks Pending and Rejected users even if they already have an Auth session or call Supabase directly. Apply equivalent `is_active_member()` policies to future member-only tables.

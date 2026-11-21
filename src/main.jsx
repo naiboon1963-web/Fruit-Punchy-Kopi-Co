@@ -48,7 +48,7 @@ function Header() {
     window.addEventListener('resize', closeOnDesktop)
     return () => { document.removeEventListener('keydown', closeOnEscape); window.removeEventListener('resize', closeOnDesktop) }
   }, [open])
-  return <header className="site-header"><div className="shell header-inner"><Brand onClick={() => setOpen(false)} /><button ref={toggle} className={`menu-toggle ${open ? 'is-open' : ''}`} aria-label={open ? 'Close navigation' : 'Open navigation'} aria-expanded={open} aria-controls="main-navigation" onClick={() => setOpen(!open)}><span /><span /></button><nav id="main-navigation" aria-label="Main navigation" className={open ? 'nav-open' : ''}>{links.map(([label, href]) => <a key={href} href={href} onClick={() => setOpen(false)}>{label}</a>)}<a href={user ? '/members' : '/?account=signin'} onClick={() => setOpen(false)}>{user ? 'My account' : 'Member login'}</a><a className="nav-visit" href={directions} target="_blank" rel="noopener noreferrer">Come on over <Icon name="arrow" /></a></nav></div></header>
+  return <header className="site-header"><div className="shell header-inner"><Brand onClick={() => setOpen(false)} /><button ref={toggle} className={`menu-toggle ${open ? 'is-open' : ''}`} aria-label={open ? 'Close navigation' : 'Open navigation'} aria-expanded={open} aria-controls="main-navigation" onClick={() => setOpen(!open)}><span /><span /></button><nav id="main-navigation" aria-label="Main navigation" className={open ? 'nav-open' : ''}>{links.map(([label, href]) => <a key={href} href={href} onClick={() => setOpen(false)}>{label}</a>)}<a href={user ? '/members' : '/?account=signin'} onClick={() => setOpen(false)}>{user ? 'My account' : 'Member login'}</a><a href="/?account=staff" onClick={() => setOpen(false)}>Staff login</a><a className="nav-visit" href={directions} target="_blank" rel="noopener noreferrer">Come on over <Icon name="arrow" /></a></nav></div></header>
 }
 
 function Hero() {
@@ -108,7 +108,7 @@ function Footer() {
 const route = resolveRoute(window.location)
 
 function App() {
-  return <><a className="skip-link" href="#main">Skip to content</a><div id="top" /><div className="announcement"><span aria-hidden="true">✳</span> A colourful little corner of Bukit Timah.</div><Header />{route === 'admin' ? <AdminPage /> : route === 'members' ? <RequireMember><AccountPage /></RequireMember> : route === 'account' ? <AccountPage /> : <main id="main"><Hero /><About /><Menu /><Visit /></main>}<Footer /></>
+  return <><a className="skip-link" href="#main">Skip to content</a><div id="top" /><div className="announcement"><span aria-hidden="true">✳</span> A colourful little corner of Bukit Timah.</div><Header />{route === 'staff' ? <RequireMember staffOnly><AccountPage /></RequireMember> : route === 'admin' ? <AdminPage /> : route === 'members' ? <RequireMember><AccountPage /></RequireMember> : route === 'account' ? <AccountPage /> : <main id="main"><Hero /><About /><Menu /><Visit /></main>}<Footer /></>
 }
 
 createRoot(document.getElementById('root')).render(<React.StrictMode><AuthProvider><App /></AuthProvider></React.StrictMode>)

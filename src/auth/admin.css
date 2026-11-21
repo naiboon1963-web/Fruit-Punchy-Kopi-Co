@@ -22,4 +22,6 @@
 .admin-secondary { background: transparent; color: #254e42; border: 1px solid #254e42; }
 .admin-page button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 .admin-pagination { display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 28px; font-size: 13px; }
+.admin-password-manager { margin-top: 22px; padding-top: 18px; border-top: 1px solid #254e4233; }
+.admin-password-manager p { font-size: 12px; line-height: 1.7; }
 @media (max-width: 700px) { .admin-page { padding-block: 30px 45px; } .admin-heading { align-items: start; flex-direction: column; } .admin-member-grid { grid-template-columns: 1fr; } .admin-member { padding: 22px; } }

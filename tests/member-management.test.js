@@ -33,12 +33,12 @@ test('member status and usernames are enforced by the database', async () => {
   } finally { await db.close() }
 })
 
-async function endpoint({ status='Pending', duplicate=false, validPassword=true }={}) {
+async function endpoint({ status='Pending', duplicate=false, validPassword=true, role='member', verified=true }={}) {
   let handler; let signedOut=false
   const client = {
-    from: () => ({ select() { return this }, eq() { return this }, maybeSingle: async () => ({ data: {id,email:'member@example.test'},error:null }), single: async () => ({ data: {status,username:'member_1',full_name:'Test Member'},error:null }) }),
+    from: () => ({ select() { return this }, eq() { return this }, maybeSingle: async () => ({ data: {id,email:'member@example.test'},error:null }), single: async () => ({ data: {status,role,username:'member_1',full_name:'Test Member'},error:null }) }),
     auth: {
-      signInWithPassword: async () => validPassword ? { data:{ session:{access_token:'access',refresh_token:'refresh'},user:{id,email_confirmed_at:'2026-11-21'}},error:null } : { data:{},error:{} },
+      signInWithPassword: async () => validPassword ? { data:{ session:{access_token:'access',refresh_token:'refresh'},user:{id,email_confirmed_at:verified?'2026-11-21':null}},error:null } : { data:{},error:{} },
       signOut: async () => { signedOut=true },
     },
   }
@@ -59,4 +59,16 @@ test('Active login returns a session; rejected and incorrect-password logins do 
 test('registration reports duplicate usernames before creating an account',async()=>{
   const server=await endpoint(); const response=await server.handler(new Request('https://test/functions/v1/member-auth',{method:'POST',body:JSON.stringify({action:'register',username:'member_1',email:'member@example.test',password:'password-test-123',full_name:'Test Member',telephone:'+65 12345678'})}))
   assert.equal(response.status,409); assert.match((await response.json()).error,/username is already registered/)
+})
+
+test('staff login requires active, email-verified staff and never releases member tokens',async()=>{
+  const request=()=>new Request('https://test/functions/v1/member-auth',{method:'POST',body:JSON.stringify({action:'staff-login',username:'member_1',password:'password-test-123'})})
+  for(const options of [{status:'Active',role:'member'},{status:'Pending',role:'staff'},{status:'Active',role:'staff',verified:false}]) {
+    const server=await endpoint(options),response=await server.handler(request())
+    assert.equal(response.status,403);assert.equal((await response.json()).session,undefined);assert.equal(server.signedOut(),true)
+  }
+  for(const role of ['staff','admin']) {
+    const server=await endpoint({status:'Active',role}),response=await server.handler(request())
+    assert.equal(response.status,200);assert.equal((await response.json()).session.access_token,'access')
+  }
 })

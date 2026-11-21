@@ -50,16 +50,17 @@ test('only server admin operations can approve, promote and write the audit log'
 const password='local-test-admin-pass'
 const salt=Buffer.from('local-test-salt-123')
 const passwordHash=['pbkdf2-sha256','210000',salt.toString('base64url'),pbkdf2Sync(password,salt,210000,32,'sha256').toString('base64url')].join(':')
-async function setup({allowed=true}={}) {
-  let handler,reads=0,changes=0,now=Date.now()
+async function setup({allowed=true,profileRole='member'}={}) {
+  let handler,reads=0,changes=0,passwordChanges=0,now=Date.now()
   const client={
     rpc:async(name)=>name==='consume_admin_login_attempt'?{data:allowed,error:null}:(changes++,{data:{id,role:'staff'},error:null}),
-    from:()=>({select(){return this},eq(){return this},order(){return this},range:async()=>{reads++;return {data:[{id,username:'qa_member'}],count:1,error:null}}}),
+    from:()=>({select(){return this},eq(){return this},order(){return this},maybeSingle:async()=>({data:{id,role:profileRole},error:null}),range:async()=>{reads++;return {data:[{id,username:'qa_member'}],count:1,error:null}}}),
+    auth:{admin:{updateUserById:async()=>{passwordChanges++;return {data:{user:{id}},error:null}}}},
   }
   const source=(await readFile(new URL('../supabase/functions/admin-members/index.ts',import.meta.url),'utf8')).replace(/^import .*\n/,'')
   class TestDate extends Date { static now(){return now} }
   vm.runInNewContext(stripTypeScriptTypes(source),{createClient:()=>client,Deno:{env:{get:key=>({ADMIN_PASSWORD_HASH:passwordHash,ADMIN_SESSION_SECRET:'local-test-signing-secret-more-than-32-characters',SUPABASE_URL:'https://project.example',SUPABASE_SERVICE_ROLE_KEY:'server-only-test-key',MEMBER_SITE_URL:'https://cafe.example'}[key])},serve:fn=>{handler=fn}},crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,btoa,atob,Request,Response,URL,Date:TestDate,JSON,Set})
-  return {call:(body,origin='https://cafe.example')=>handler(new Request('https://project.example/functions/v1/admin-members',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify(body)})),counts:()=>({reads,changes}),expire:()=>{now+=901000}}
+  return {call:(body,origin='https://cafe.example')=>handler(new Request('https://project.example/functions/v1/admin-members',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify(body)})),counts:()=>({reads,changes}),passwordChanges:()=>passwordChanges,expire:()=>{now+=901000}}
 }
 
 test('admin password and signed session protect all reads and mutations',async()=>{
@@ -85,4 +86,18 @@ test('admin login is rate limited and rejects untrusted origins',async()=>{
   assert.equal((await server.call({action:'login',password})).status,429)
   assert.equal((await server.call({action:'login',password},'https://untrusted.example')).status,403)
   assert.deepEqual(server.counts(),{reads:0,changes:0})
+})
+
+test('only an admin session can set member/staff passwords and passwords are never returned',async()=>{
+  for(const profileRole of ['member','staff','admin']) {
+    const server=await setup({profileRole})
+    const change={action:'set-password',member_id:id,password:'NewLocalTestPassword42!'}
+    assert.equal((await server.call(change)).status,401);assert.equal(server.passwordChanges(),0)
+    const {token}=await (await server.call({action:'login',password})).json()
+    assert.equal((await server.call({...change,admin_token:token,password:'short'})).status,400)
+    const response=await server.call({...change,admin_token:token})
+    assert.equal(response.status,profileRole==='admin'?404:200)
+    assert.equal(server.passwordChanges(),profileRole==='admin'?0:1)
+    assert.equal((await response.text()).includes(change.password),false)
+  }
 })

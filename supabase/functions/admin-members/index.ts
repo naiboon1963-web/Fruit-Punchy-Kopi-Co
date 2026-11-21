@@ -87,7 +87,16 @@ Deno.serve(async (request: Request) => {
       if (error) return reply(503, { error: 'Unable to load members. Please retry.' })
       return reply(200, { members: data, total: count, page })
     }
-    if (!['approve', 'promote'].includes(body.action) || typeof body.member_id !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(body.member_id)) return reply(400, { error: 'Choose a valid member and action.' })
+    if (!['approve', 'promote', 'set-password'].includes(body.action) || typeof body.member_id !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(body.member_id)) return reply(400, { error: 'Choose a valid member and action.' })
+    if (body.action === 'set-password') {
+      if (typeof body.password !== 'string' || body.password.length < 12 || body.password.length > 128) return reply(400, { error: 'Choose a new password of 12–128 characters.' })
+      const { data: member, error: lookupError } = await admin.from('profiles').select('id, role').eq('id', body.member_id).maybeSingle()
+      if (lookupError) return reply(503, { error: 'Unable to check this member. Please retry.' })
+      if (!member || !['member', 'staff'].includes(member.role)) return reply(404, { error: 'Choose an existing member or staff account.' })
+      const { error: passwordError } = await admin.auth.admin.updateUserById(member.id, { password: body.password })
+      if (passwordError) return reply(400, { error: 'Unable to set the password. It must meet the project password requirements.' })
+      return reply(200, { message: 'Password updated. The account still needs approval and email verification before sign-in.' })
+    }
     const username = typeof body.username === 'string' ? body.username.trim().toLowerCase() : null
     if (username !== null && !/^[a-z0-9_]{3,30}$/.test(username)) return reply(400, { error: 'Usernames need 3–30 letters, numbers or underscores.' })
     const { data, error } = await admin.rpc('admin_manage_member', { target_id: body.member_id, requested_action: body.action, assigned_username: username })

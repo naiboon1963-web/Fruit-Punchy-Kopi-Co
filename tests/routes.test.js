@@ -34,6 +34,16 @@ test('admin routes always use the server-authenticated admin area', () => {
   assert.equal(route('/administrator'), 'public')
 })
 
+test('staff paths stay protected and preserve safe staff destinations', () => {
+  for(const path of ['/staff','/staff/settings','/staff?account=join','/staff#access_token=forged']) assert.equal(route(path),'staff')
+  assert.equal(route('/staffing'),'public')
+  const location=new URL('https://cafe.example/staff/settings?tab=profile')
+  const login=new URL(memberSignInUrl(location),location.origin)
+  assert.equal(login.searchParams.get('account'),'staff')
+  assert.equal(accountDestination(login),'/staff/settings?tab=profile')
+  assert.equal(accountDestination(location),null)
+})
+
 test('login returns to the member deep link without repeated redirects', () => {
   const protectedUrl = new URL('https://cafe.example/members/settings?tab=profile&next=%2Fmembers')
   const login = new URL(memberSignInUrl(protectedUrl), protectedUrl.origin)

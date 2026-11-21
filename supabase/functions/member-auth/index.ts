@@ -31,7 +31,7 @@ export async function handleMemberAuth(request: Request) {
       if (error) return reply(error.status === 429 ? 429 : 400, { error: 'Unable to send a reset email. Please try again later.' })
       return reply(200, { success: true })
     }
-    if (!['register', 'login'].includes(body.action) || !/^[a-z0-9_]{3,30}$/.test(username) || !password || password.length > 128) return reply(400, { error: 'Enter a valid username and password.' })
+    if (!['register', 'login', 'staff-login'].includes(body.action) || !/^[a-z0-9_]{3,30}$/.test(username) || !password || password.length > 128) return reply(400, { error: 'Enter a valid username and password.' })
     if (body.action === 'register') {
       const fullName = typeof body.full_name === 'string' ? body.full_name.trim() : ''
       const telephone = typeof body.telephone === 'string' ? body.telephone.trim() : ''
@@ -55,10 +55,14 @@ export async function handleMemberAuth(request: Request) {
     if (error || !data.session || !member || data.user.id !== member.id) return reply(401, { error: 'The username or password is incorrect, or your email has not been verified.' })
     // Read approval after password verification. No tokens leave this endpoint
     // until the server confirms the current status and verified email.
-    const { data: profile, error: statusError } = await admin.from('profiles').select('status, username, full_name').eq('id', member.id).single()
+    const { data: profile, error: statusError } = await admin.from('profiles').select('status, username, full_name, role').eq('id', member.id).single()
     if (statusError || profile.status !== 'Active' || !data.user.email_confirmed_at) {
       await client.auth.signOut()
       return reply(403, { error: profile?.status === 'Pending' ? pendingMessage : 'Your membership is not active. Please contact the café team.' })
+    }
+    if (body.action === 'staff-login' && !['staff', 'admin'].includes(profile.role)) {
+      await client.auth.signOut()
+      return reply(403, { error: 'Staff access is required. Please use member login or contact the café team.' })
     }
     return reply(200, { session: { access_token: data.session.access_token, refresh_token: data.session.refresh_token } })
   } catch { return reply(500, { error: 'Unable to complete your request. Please try again.' }) }
