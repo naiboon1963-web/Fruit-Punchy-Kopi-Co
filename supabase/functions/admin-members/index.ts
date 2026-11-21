@@ -95,7 +95,7 @@ Deno.serve(async (request: Request) => {
       if (!member || !['member', 'staff'].includes(member.role)) return reply(404, { error: 'Choose an existing member or staff account.' })
       const { error: passwordError } = await admin.auth.admin.updateUserById(member.id, { password: body.password })
       if (passwordError) return reply(400, { error: 'Unable to set the password. It must meet the project password requirements.' })
-      return reply(200, { message: 'Password updated. The account still needs approval and email verification before sign-in.' })
+      return reply(200, { message: 'Password updated. The account must be approved before sign-in.' })
     }
     const username = typeof body.username === 'string' ? body.username.trim().toLowerCase() : null
     if (username !== null && !/^[a-z0-9_]{3,30}$/.test(username)) return reply(400, { error: 'Usernames need 3–30 letters, numbers or underscores.' })
@@ -108,6 +108,6 @@ Deno.serve(async (request: Request) => {
       }
       return reply(error.code === 'P0002' ? 404 : 409, { error: messages[error.code] || 'Unable to update this member. Refresh and try again.' })
     }
-    return reply(200, { member: data, message: body.action === 'approve' ? 'Member approved. Email verification is still required before sign-in.' : 'Member upgraded to staff.' })
+    return reply(200, { member: data, message: body.action === 'approve' ? 'Member approved. They can now sign in with their username and password.' : 'Member upgraded to staff.' })
   } catch { return reply(500, { error: 'Unable to complete the admin request. Please retry.' }) }
 })

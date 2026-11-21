@@ -12,7 +12,7 @@ export default function RequireMember({ children, staffOnly = false }) {
     if (!user || recovery) return
     supabase.from('profiles').select('id, status, role').eq('id', user.id).single()
       .then(({ data, error }) => {
-        if (active) setAccess({ user, allowed: !error && data?.status === 'Active' && Boolean(user.email_confirmed_at) && (!staffOnly || ['staff', 'admin'].includes(data?.role)) })
+        if (active) setAccess({ user, allowed: !error && data?.status === 'Active' && (!staffOnly || ['staff', 'admin'].includes(data?.role)) })
       }).catch(() => { if (active) setAccess({ user, allowed: false }) })
     return () => { active = false }
   }, [user, recovery, staffOnly])
@@ -22,7 +22,7 @@ export default function RequireMember({ children, staffOnly = false }) {
   }, [checking, user, recovery])
   if (checking) return <main id="main" className="shell section-space"><p role="status">Checking your membership…</p></main>
   if (!user || recovery) return <main id="main" className="shell section-space"><p role="status">{authError || 'Taking you to member login…'}</p><a href={memberSignInUrl(window.location)}>Member login</a></main>
-  if (!access?.allowed) return <main id="main" className="shell section-space"><h1>{staffOnly ? 'Staff access unavailable' : 'Member access unavailable'}</h1><p role="alert">{staffOnly ? 'An active, email-verified staff account is required.' : 'Your membership must be active and your email verified.'} Please contact the café team.</p><a href="/?account=signin">My account</a></main>
+  if (!access?.allowed) return <main id="main" className="shell section-space"><h1>{staffOnly ? 'Staff access unavailable' : 'Member access unavailable'}</h1><p role="alert">{staffOnly ? 'An approved staff account is required.' : 'Your membership must be approved.'} Please contact the café team.</p><a href="/?account=signin">My account</a></main>
   return children
 }
 

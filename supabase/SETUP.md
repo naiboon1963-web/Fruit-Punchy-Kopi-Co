@@ -6,10 +6,10 @@ The website now uses username/password member login. Staff menus and staff creat
 
 Project: `nbkoh project` (`tufjpeqcunebcxnucrxx`). The previous `fruitpunchy` project (`cmsnlbvkxwsbzankxxts`) is retained separately; app deployments use the public connection variables for `nbkoh project`.
 
-The switch configures Auth callbacks, email confirmation, the member/admin functions, and database policies. Gmail SMTP is declared with sender `naiboon1963@gmail.com`, host `smtp.gmail.com`, and SSL port `465`. Supply `GMAIL_SMTP_PASSWORD` through the environment before pushing SMTP configuration. Use a Gmail app password, never the account's regular password. Local credentials belong in the ignored `.env.smtp.local`, never source control. The previous project's SMTP password is not exported by Supabase and must be supplied again for this project. Until SMTP is applied, Supabase's default sender is intended for testing and restricts recipient delivery.
+The switch configures Auth callbacks, approval-only login, the member/admin functions, and database policies. Gmail SMTP is declared with sender `naiboon1963@gmail.com`, host `smtp.gmail.com`, and SSL port `465`. Supply `GMAIL_SMTP_PASSWORD` through the environment before pushing SMTP configuration. Use a Gmail app password, never the account's regular password. Local credentials belong in the ignored `.env.smtp.local`, never source control. The previous project's SMTP password is not exported by Supabase and must be supplied again for this project. Until SMTP is applied, Supabase's default sender is intended for testing and restricts recipient delivery.
 
-1. Apply all migrations in filename order. For an existing installation with the first two migrations already applied, apply only `migrations/202611210001_member_usernames_and_status.sql` through the Supabase SQL Editor or authenticated CLI. Do not rerun the historical migrations.
-2. Keep email authentication enabled, email confirmation enabled, and minimum password length at 12. Configure and test the email sender for public registration.
+1. Apply all migrations in filename order, including `20261121060000_approval_only_member_login.sql` for approval-only access. For an existing installation with the first two migrations already applied, apply only `migrations/202611210001_member_usernames_and_status.sql` through the Supabase SQL Editor or authenticated CLI. Do not rerun the historical migrations.
+2. Keep email authentication enabled, email confirmation disabled, and minimum password length at 12. Configure and test the email sender for public registration.
 3. Deploy `functions/member-auth/index.ts` as the `member-auth` Edge Function. Its gateway JWT verification must be disabled, as specified in `config.toml`; the function validates login credentials and membership status itself. It uses Supabase's automatically provided `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` only on the server.
 4. Set the Edge Function secret `MEMBER_SITE_URL` to the canonical website origin, `https://fruit-punchy-kopi-co.vercel.app` for the production Vercel deployment.
 5. Add the canonical origin's exact `/?account=callback` and `/?account=reset` URLs to Supabase Authentication URL Configuration. Set the Site URL to the same canonical origin.
@@ -21,7 +21,7 @@ Existing profiles keep their IDs, email addresses, roles, and names. Their full 
 
 For each approved member, assign a unique lowercase username (3–30 letters, digits or underscores), review the full name and telephone number, and change status to `Active`. Do not change approval using Auth user metadata. Members cannot change their status or role through the website.
 
-Statuses are `Pending`, `Active`, and `Rejected`. The `/admin` page provides password-protected member approval and staff promotion. Legacy profiles without a username can be assigned one during approval. Approval does not bypass email verification.
+Statuses are `Pending`, `Active`, and `Rejected`. The `/admin` page provides password-protected member approval and staff promotion. Legacy profiles without a username can be assigned one during approval. Approval allows username/password sign-in without email verification.
 
 ## Admin console
 
@@ -31,13 +31,13 @@ Configure the server-only secrets `ADMIN_PASSWORD_HASH` and `ADMIN_SESSION_SECRE
 
 Admin sessions last 15 minutes, remain in browser memory, and are discarded by the Lock administration button or a page reload. Login attempts are throttled in the database. Approval and staff promotion run transactionally and are recorded in `admin_private.member_actions`. Ordinary members and anonymous callers cannot execute these operations or read the private audit log. Staff promotion is available only after membership is Active; it preserves the member's existing login credentials.
 
-Admins can set a new 12–128 character password for a member or staff account through the server-only Auth admin API. Existing passwords cannot be displayed or retrieved. Setting a password does not approve an account or verify its email. Password values are never returned by the admin endpoint.
+Admins can set a new 12–128 character password for a member or staff account through the server-only Auth admin API. Existing passwords cannot be displayed or retrieved. Setting a password does not approve an account. Password values are never returned by the admin endpoint.
 
-Staff sign in at `/?account=staff`; `/staff` and its subpaths require Active status, verified email, and a current `staff` or `admin` profile role. The `staff-login` server action checks that role before releasing session tokens. Both member and staff account pages display username, full name, role, and logout.
+Staff sign in at `/?account=staff`; `/staff` and its subpaths require Active status, a current `staff` or `admin` profile role. The `staff-login` server action checks that role before releasing session tokens. Both member and staff account pages display username, full name, role, and logout.
 
 ## Access enforcement
 
-The server authenticates the password and then reads the current membership status. Pending users receive the requested error and no login tokens. Active users must also have a verified email. Database RLS independently blocks Pending and Rejected users even if they already have an Auth session or call Supabase directly. Apply equivalent `is_active_member()` policies to future member-only tables.
+The server authenticates the password and then reads the current membership status. Pending users receive the requested error and no login tokens. Active users can sign in without email verification. Database RLS independently blocks Pending and Rejected users even if they already have an Auth session or call Supabase directly. Apply equivalent `is_active_member()` policies to future member-only tables.
 
 Username uniqueness is case-insensitive because values are normalized to lowercase and protected by a database unique constraint. Concurrent duplicate registrations cannot create two profiles with the same username. Duplicate username messages intentionally reveal username availability, but never return email addresses.
 

@@ -13,7 +13,7 @@ test('member status and usernames are enforced by the database', async () => {
       create schema auth; create table auth.users(id uuid primary key, email text, email_confirmed_at timestamptz, raw_user_meta_data jsonb not null default '{}');
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
       grant usage on schema public,auth to anon,authenticated,service_role; grant execute on function auth.uid() to anon,authenticated,service_role;`)
-    for (const migration of ['202611140001_members_and_staff.sql','202611140002_code_authorized_staff_invitations.sql','202611210001_member_usernames_and_status.sql']) await db.exec(await readFile(new URL('../supabase/migrations/' + migration, import.meta.url),'utf8'))
+    for (const migration of ['202611140001_members_and_staff.sql','202611140002_code_authorized_staff_invitations.sql','202611210001_member_usernames_and_status.sql','20261121060000_approval_only_member_login.sql']) await db.exec(await readFile(new URL('../supabase/migrations/' + migration, import.meta.url),'utf8'))
     await db.query(`insert into auth.users values ($1,'member@example.test',now(),'{"username":"Member_1","full_name":"Test Member","telephone":"+65 12345678","status":"Active","role":"admin"}')`,[id])
     const member = (await db.query('select * from public.profiles')).rows[0]
     assert.equal(member.username,'member_1'); assert.equal(member.status,'Pending'); assert.equal(member.role,'member'); assert.equal(member.full_name,'Test Member')
@@ -29,7 +29,7 @@ test('member status and usernames are enforced by the database', async () => {
     await db.exec('reset role')
     await db.query(`update auth.users set email_confirmed_at=null where id=$1`,[id])
     await db.exec('set role authenticated')
-    assert.equal((await db.query('select * from public.profiles')).rows.length,0,'Unverified active users remain blocked')
+    assert.equal((await db.query('select * from public.profiles')).rows.length,1,'Approved users can read their own profile without email verification')
   } finally { await db.close() }
 })
 
@@ -43,7 +43,7 @@ async function endpoint({ status='Pending', duplicate=false, validPassword=true,
     },
   }
   let code = await readFile(new URL('../supabase/functions/member-auth/index.ts',import.meta.url),'utf8')
-  code=code.replace(/^import .*\n/,'').replace('export async function','async function')
+  code=code.replace(/^import .*\r?\n/,'').replace('export async function','async function')
   vm.runInNewContext(stripTypeScriptTypes(code),{createClient:()=>client,Deno:{env:{get:(key)=>key==='MEMBER_SITE_URL'?'https://cafe.example':'test'},serve:fn=>{handler=fn}},Request,Response,URL,JSON})
   return {handler,signedOut:()=>signedOut}
 }
@@ -61,9 +61,9 @@ test('registration reports duplicate usernames before creating an account',async
   assert.equal(response.status,409); assert.match((await response.json()).error,/username is already registered/)
 })
 
-test('staff login requires active, email-verified staff and never releases member tokens',async()=>{
+test('staff login requires active staff and never releases member tokens',async()=>{
   const request=()=>new Request('https://test/functions/v1/member-auth',{method:'POST',body:JSON.stringify({action:'staff-login',username:'member_1',password:'password-test-123'})})
-  for(const options of [{status:'Active',role:'member'},{status:'Pending',role:'staff'},{status:'Active',role:'staff',verified:false}]) {
+  for(const options of [{status:'Active',role:'member'},{status:'Pending',role:'staff'}]) {
     const server=await endpoint(options),response=await server.handler(request())
     assert.equal(response.status,403);assert.equal((await response.json()).session,undefined);assert.equal(server.signedOut(),true)
   }
@@ -71,4 +71,10 @@ test('staff login requires active, email-verified staff and never releases membe
     const server=await endpoint({status:'Active',role}),response=await server.handler(request())
     assert.equal(response.status,200);assert.equal((await response.json()).session.access_token,'access')
   }
+})
+
+test('Active member can sign in without email verification; Pending and Rejected remain blocked', async () => {
+  const active=await endpoint({status:'Active',verified:false}); const response=await active.handler(login());
+  assert.equal(response.status,200); assert.equal((await response.json()).session.access_token,'access');
+  for (const status of ['Pending','Rejected']) { const server=await endpoint({status,verified:false}); const blocked=await server.handler(login()); assert.equal(blocked.status,403); assert.equal((await blocked.json()).session,undefined) }
 })

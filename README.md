@@ -13,7 +13,7 @@ Create a production build with `npm run build`. Run existing security checks wit
 
 ## Account setup
 
-The public website works without credentials. Member accounts use Supabase Auth with username/password login, verified email, and manual approval. `/members` and its subpaths require a verified session and an Active profile; database RLS independently enforces access. Sign in at `/?account=signin` and register at `/?account=join`.
+The public website works without credentials. Member accounts use Supabase Auth with username/password login, manual approval. `/members` and its subpaths require an authenticated session and an Active profile; database RLS independently enforces access. Sign in at `/?account=signin` and register at `/?account=join`.
 
 Follow [the deployment guide](supabase/SETUP.md) to configure the public environment variables, migrations, `member-auth` Edge Function, email delivery, and callback URLs. Never use a service-role key in browser configuration.
 

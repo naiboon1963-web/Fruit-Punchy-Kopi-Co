@@ -16,7 +16,7 @@ test('only server admin operations can approve, promote and write the audit log'
       create schema auth; create table auth.users(id uuid primary key, email text, email_confirmed_at timestamptz, raw_user_meta_data jsonb not null default '{}');
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
       grant usage on schema public,auth to anon,authenticated,service_role; grant execute on function auth.uid() to anon,authenticated,service_role;`)
-    for (const name of ['202611140001_members_and_staff.sql','202611140002_code_authorized_staff_invitations.sql','202611210001_member_usernames_and_status.sql',migration]) await db.exec(await readFile(new URL('../supabase/migrations/'+name,import.meta.url),'utf8'))
+    for (const name of ['202611140001_members_and_staff.sql','202611140002_code_authorized_staff_invitations.sql','202611210001_member_usernames_and_status.sql',migration,'20261121060000_approval_only_member_login.sql']) await db.exec(await readFile(new URL('../supabase/migrations/'+name,import.meta.url),'utf8'))
     await db.query(`insert into auth.users values ($1,'qa@example.test',null,'{"username":"qa_member"}')`,[id])
     for (const role of ['anon','authenticated']) {
       await db.exec('set role '+role)
@@ -37,7 +37,7 @@ test('only server admin operations can approve, promote and write the audit log'
     await db.exec('reset role')
     await db.query(`select set_config('request.jwt.claim.sub',$1,false)`,[id])
     await db.exec('set role authenticated')
-    assert.equal((await db.query('select * from public.profiles')).rows.length,0,'Approval never bypasses email verification')
+    assert.equal((await db.query('select * from public.profiles')).rows.length,1,'Approval grants access without an email-verification step')
     await db.exec('reset role')
     await db.query(`insert into auth.users values ('00000000-0000-0000-0000-000000000002','legacy@example.test',now(),'{}')`)
     await db.exec('set role service_role')
@@ -57,7 +57,7 @@ async function setup({allowed=true,profileRole='member'}={}) {
     from:()=>({select(){return this},eq(){return this},order(){return this},maybeSingle:async()=>({data:{id,role:profileRole},error:null}),range:async()=>{reads++;return {data:[{id,username:'qa_member'}],count:1,error:null}}}),
     auth:{admin:{updateUserById:async()=>{passwordChanges++;return {data:{user:{id}},error:null}}}},
   }
-  const source=(await readFile(new URL('../supabase/functions/admin-members/index.ts',import.meta.url),'utf8')).replace(/^import .*\n/,'')
+  const source=(await readFile(new URL('../supabase/functions/admin-members/index.ts',import.meta.url),'utf8')).replace(/^import .*\r?\n/,'')
   class TestDate extends Date { static now(){return now} }
   vm.runInNewContext(stripTypeScriptTypes(source),{createClient:()=>client,Deno:{env:{get:key=>({ADMIN_PASSWORD_HASH:passwordHash,ADMIN_SESSION_SECRET:'local-test-signing-secret-more-than-32-characters',SUPABASE_URL:'https://project.example',SUPABASE_SERVICE_ROLE_KEY:'server-only-test-key',MEMBER_SITE_URL:'https://cafe.example'}[key])},serve:fn=>{handler=fn}},crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,btoa,atob,Request,Response,URL,Date:TestDate,JSON,Set})
   return {call:(body,origin='https://cafe.example')=>handler(new Request('https://project.example/functions/v1/admin-members',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify(body)})),counts:()=>({reads,changes}),passwordChanges:()=>passwordChanges,expire:()=>{now+=901000}}

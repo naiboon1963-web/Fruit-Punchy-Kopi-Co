@@ -52,11 +52,11 @@ export async function handleMemberAuth(request: Request) {
     if (lookupError) return reply(503, { error: 'Member services are temporarily unavailable.' })
     // Attempt authentication even for unknown usernames, using an ineligible address.
     const { data, error } = await client.auth.signInWithPassword({ email: member?.email || 'unknown-member@invalid.example', password })
-    if (error || !data.session || !member || data.user.id !== member.id) return reply(401, { error: 'The username or password is incorrect, or your email has not been verified.' })
+    if (error || !data.session || !member || data.user.id !== member.id) return reply(401, { error: 'The username or password is incorrect.' })
     // Read approval after password verification. No tokens leave this endpoint
-    // until the server confirms the current status and verified email.
+    // until the server confirms the current approval status.
     const { data: profile, error: statusError } = await admin.from('profiles').select('status, username, full_name, role').eq('id', member.id).single()
-    if (statusError || profile.status !== 'Active' || !data.user.email_confirmed_at) {
+    if (statusError || profile.status !== 'Active') {
       await client.auth.signOut()
       return reply(403, { error: profile?.status === 'Pending' ? pendingMessage : 'Your membership is not active. Please contact the café team.' })
     }
