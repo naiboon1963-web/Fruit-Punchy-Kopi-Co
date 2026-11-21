@@ -1,5 +1,6 @@
 // Protected paths take precedence over account query parameters and callbacks.
 export function resolveRoute({ pathname, search, hash }) {
+  if (/^\/admin(?:\/|$)/.test(pathname)) return 'admin'
   if (/^\/members(?:\/|$)/.test(pathname)) return 'members'
   if (new URLSearchParams(search).has('account') ||
       new URLSearchParams(hash.slice(1)).has('access_token')) return 'account'

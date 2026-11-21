@@ -24,7 +24,7 @@ export default function AccountPage() {
     setProfile(null)
     if (!user || recovery) { setChecking(false); return }
     setChecking(true)
-    supabase.from('profiles').select('username, full_name, status').eq('id', user.id).single()
+    supabase.from('profiles').select('username, full_name, status, role').eq('id', user.id).single()
       .then(async ({ data, error: profileError }) => {
         if (!active) return
         if (profileError || data?.status !== 'Active') {
@@ -101,7 +101,7 @@ export default function AccountPage() {
     {!authConfigured && <p className="account-notice" role="status">Member services are not configured yet.</p>}
     {(error || authError) && <p className="account-notice account-error" role="alert">{error || authError}</p>}
     {message && <p className="account-notice" role="status">{message}</p>}
-    {loading || checking ? <h2 id="account-heading">Checking your account…</h2> : profile && profile.userId === user?.id && !settingPassword ? <><p className="eyebrow">YOUR MEMBER CORNER</p><h2 id="account-heading">Welcome, {profile.full_name}.</h2><dl><dt>Login username</dt><dd>{profile.username}</dd><dt>Full name</dt><dd>{profile.full_name}</dd></dl><a className="text-link" href="/members">Member corner</a><button className="button" onClick={logout} disabled={busy}>Log out</button></> : <>
+    {loading || checking ? <h2 id="account-heading">Checking your account…</h2> : profile && profile.userId === user?.id && !settingPassword ? <><p className="eyebrow">YOUR MEMBER CORNER</p><h2 id="account-heading">Welcome, {profile.full_name}.</h2><dl><dt>Login username</dt><dd>{profile.username}</dd><dt>Full name</dt><dd>{profile.full_name}</dd><dt>Role</dt><dd>{profile.role}</dd></dl><a className="text-link" href="/members">Member corner</a><button className="button" onClick={logout} disabled={busy}>Log out</button></> : <>
       <h2 id="account-heading">{settingPassword ? 'Choose a new password.' : view === 'join' ? 'Create your membership.' : view === 'forgot' ? 'Reset your password.' : 'Member login.'}</h2>
       {view === 'join' && <p>New memberships start as Pending. The café team must activate your membership before you can sign in.</p>}
       <form className="account-form" onSubmit={submit}>

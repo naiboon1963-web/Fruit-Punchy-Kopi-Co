@@ -20,6 +20,10 @@
   ],
   "rewrites": [
     {
+      "source": "/admin/:path*",
+      "destination": "/index.html"
+    },
+    {
       "source": "/members/:path*",
       "destination": "/index.html"
     }

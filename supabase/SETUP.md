@@ -4,7 +4,9 @@ The website now uses username/password member login. Staff menus and staff creat
 
 ## Activate in Supabase
 
-Project: `cmsnlbvkxwsbzankxxts`.
+Project: `nbkoh project` (`tufjpeqcunebcxnucrxx`). The previous `fruitpunchy` project (`cmsnlbvkxwsbzankxxts`) is retained separately; app deployments use the public connection variables for `nbkoh project`.
+
+The switch configures Auth callbacks, email confirmation, the member/admin functions, and database policies. Configure a custom SMTP sender in this project's Auth settings before opening public registration. The previous project's SMTP password is not exported by Supabase and is not stored in this repository; it must be supplied again for this project. Supabase's default sender is intended for testing and restricts recipient delivery.
 
 1. Apply all migrations in filename order. For an existing installation with the first two migrations already applied, apply only `migrations/202611210001_member_usernames_and_status.sql` through the Supabase SQL Editor or authenticated CLI. Do not rerun the historical migrations.
 2. Keep email authentication enabled, email confirmation enabled, and minimum password length at 12. Configure and test the email sender for public registration.
@@ -19,7 +21,15 @@ Existing profiles keep their IDs, email addresses, roles, and names. Their full 
 
 For each approved member, assign a unique lowercase username (3–30 letters, digits or underscores), review the full name and telephone number, and change status to `Active`. Do not change approval using Auth user metadata. Members cannot change their status or role through the website.
 
-Statuses are `Pending`, `Active`, and `Rejected`. No administrator interface or default administrator password is included. Approval is managed directly by the project owner in Supabase.
+Statuses are `Pending`, `Active`, and `Rejected`. The `/admin` page provides password-protected member approval and staff promotion. Legacy profiles without a username can be assigned one during approval. Approval does not bypass email verification.
+
+## Admin console
+
+Apply `20261121034501_admin_member_management.sql`, then deploy `functions/admin-members/index.ts` with gateway JWT verification disabled, as declared in `config.toml`. This endpoint verifies its own signed admin session before every read or write.
+
+Configure the server-only secrets `ADMIN_PASSWORD_HASH` and `ADMIN_SESSION_SECRET`. The password hash uses `pbkdf2-sha256:210000:<base64url salt>:<base64url derived 32 bytes>`. The signing secret must contain at least 32 random characters. The initial password is configured during deployment and is never embedded in the website bundle or migrations. To rotate the admin password, replace the hash and signing secret together; replacing the signing secret invalidates existing admin sessions.
+
+Admin sessions last 15 minutes, remain in browser memory, and are discarded by the Lock administration button or a page reload. Login attempts are throttled in the database. Approval and staff promotion run transactionally and are recorded in `admin_private.member_actions`. Ordinary members and anonymous callers cannot execute these operations or read the private audit log. Staff promotion is available only after membership is Active; it preserves the member's existing login credentials.
 
 ## Access enforcement
 

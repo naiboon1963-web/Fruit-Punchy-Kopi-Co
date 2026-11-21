@@ -24,3 +24,7 @@ verify_jwt = false
 [functions.member-auth]
 # Public entry point; validates passwords and approval on the server.
 verify_jwt = false
+
+[functions.admin-members]
+# Uses its own server-verified, short-lived admin session.
+verify_jwt = false

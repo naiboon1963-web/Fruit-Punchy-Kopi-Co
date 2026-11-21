@@ -29,6 +29,11 @@ test('public pages and account callbacks remain reachable', () => {
   assert.equal(route('/#access_token=callback'), 'account')
 })
 
+test('admin routes always use the server-authenticated admin area', () => {
+  for (const path of ['/admin', '/admin/', '/admin?account=join', '/admin#access_token=forged']) assert.equal(route(path), 'admin')
+  assert.equal(route('/administrator'), 'public')
+})
+
 test('login returns to the member deep link without repeated redirects', () => {
   const protectedUrl = new URL('https://cafe.example/members/settings?tab=profile&next=%2Fmembers')
   const login = new URL(memberSignInUrl(protectedUrl), protectedUrl.origin)

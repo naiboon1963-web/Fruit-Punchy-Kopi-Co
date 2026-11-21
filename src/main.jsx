@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './styles.css'
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import AccountPage from './auth/AccountPage'
+import AdminPage from './auth/AdminPage'
 import RequireMember from './auth/RequireMember'
 import { resolveRoute } from './auth/routes.js'
 
@@ -101,13 +102,13 @@ function Visit() {
 }
 
 function Footer() {
-  return <footer className="shell site-footer"><div className="footer-main"><Brand footer /><p>A little kopi. A lot of colour.<br />Always room for one more.</p><a className="back-top" href="#top">Back to top <Icon /></a></div><div className="footer-bottom"><p>© {new Date().getFullYear()} Fruit Punchy Kopi and Art</p><p>Made with a playful heart, for our neighbourhood.</p><details className="photo-credits"><summary>Photo credits</summary><div><p>Representative imagery; not photographs of Fruit Punchy Kopi and Art</p><p>Café atmosphere: Unsplash. Food photographs from Wikimedia Commons, cropped and colour adjusted. <a href="/photo-credits.txt" target="_blank" rel="noopener noreferrer">View photographers, sources and licences ↗</a></p></div></details></div></footer>
+  return <footer className="shell site-footer"><div className="footer-main"><Brand footer /><p>A little kopi. A lot of colour.<br />Always room for one more.</p><a className="back-top" href="#top">Back to top <Icon /></a></div><div className="footer-bottom"><p>© {new Date().getFullYear()} Fruit Punchy Kopi and Art</p><p>Made with a playful heart, for our neighbourhood. <a href="/admin">Admin</a></p><details className="photo-credits"><summary>Photo credits</summary><div><p>Representative imagery; not photographs of Fruit Punchy Kopi and Art</p><p>Café atmosphere: Unsplash. Food photographs from Wikimedia Commons, cropped and colour adjusted. <a href="/photo-credits.txt" target="_blank" rel="noopener noreferrer">View photographers, sources and licences ↗</a></p></div></details></div></footer>
 }
 
 const route = resolveRoute(window.location)
 
 function App() {
-  return <><a className="skip-link" href="#main">Skip to content</a><div id="top" /><div className="announcement"><span aria-hidden="true">✳</span> A colourful little corner of Bukit Timah.</div><Header />{route === 'members' ? <RequireMember><AccountPage /></RequireMember> : route === 'account' ? <AccountPage /> : <main id="main"><Hero /><About /><Menu /><Visit /></main>}<Footer /></>
+  return <><a className="skip-link" href="#main">Skip to content</a><div id="top" /><div className="announcement"><span aria-hidden="true">✳</span> A colourful little corner of Bukit Timah.</div><Header />{route === 'admin' ? <AdminPage /> : route === 'members' ? <RequireMember><AccountPage /></RequireMember> : route === 'account' ? <AccountPage /> : <main id="main"><Hero /><About /><Menu /><Visit /></main>}<Footer /></>
 }
 
 createRoot(document.getElementById('root')).render(<React.StrictMode><AuthProvider><App /></AuthProvider></React.StrictMode>)

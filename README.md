@@ -17,4 +17,6 @@ The public website works without credentials. Member accounts use Supabase Auth 
 
 Follow [the deployment guide](supabase/SETUP.md) to configure the public environment variables, migrations, `member-auth` Edge Function, email delivery, and callback URLs. Never use a service-role key in browser configuration.
 
+Manage approvals and upgrade active members to staff at `/admin`. The admin password is checked by the `admin-members` Edge Function; approval and promotion are enforced on the server and logged privately.
+
 Menu prices, opening hours, and café unit information are provisional. Confirm these before a public launch. Photo attribution is available in `public/photo-credits.txt`.
