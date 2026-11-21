@@ -45,7 +45,7 @@ function Header() {
     window.addEventListener('resize', closeOnDesktop)
     return () => { document.removeEventListener('keydown', closeOnEscape); window.removeEventListener('resize', closeOnDesktop) }
   }, [open])
-  return <header className="site-header"><div className="shell header-inner"><Brand onClick={() => setOpen(false)} /><button ref={toggle} className={`menu-toggle ${open ? 'is-open' : ''}`} aria-label={open ? 'Close navigation' : 'Open navigation'} aria-expanded={open} aria-controls="main-navigation" onClick={() => setOpen(!open)}><span /><span /></button><nav id="main-navigation" aria-label="Main navigation" className={open ? 'nav-open' : ''}>{links.map(([label, href]) => <a key={href} href={href} onClick={() => setOpen(false)}>{label}</a>)}<a href="/?account=signin" onClick={() => setOpen(false)}>{user ? 'My account' : 'Members & staff'}</a><a className="nav-visit" href={directions} target="_blank" rel="noopener noreferrer">Come on over <Icon name="arrow" /></a></nav></div></header>
+  return <header className="site-header"><div className="shell header-inner"><Brand onClick={() => setOpen(false)} /><button ref={toggle} className={`menu-toggle ${open ? 'is-open' : ''}`} aria-label={open ? 'Close navigation' : 'Open navigation'} aria-expanded={open} aria-controls="main-navigation" onClick={() => setOpen(!open)}><span /><span /></button><nav id="main-navigation" aria-label="Main navigation" className={open ? 'nav-open' : ''}>{links.map(([label, href]) => <a key={href} href={href} onClick={() => setOpen(false)}>{label}</a>)}<a href="/?account=signin" onClick={() => setOpen(false)}>{user ? 'My account' : 'Member login'}</a><a className="nav-visit" href={directions} target="_blank" rel="noopener noreferrer">Come on over <Icon name="arrow" /></a></nav></div></header>
 }
 
 function Hero() {
@@ -109,3 +109,4 @@ function App() {
 }
 
 createRoot(document.getElementById('root')).render(<React.StrictMode><AuthProvider><App /></AuthProvider></React.StrictMode>)
+

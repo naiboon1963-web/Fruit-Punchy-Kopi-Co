@@ -16,3 +16,7 @@ enable_confirmations = true
 # The handler authorizes invitations using the server-only staff-code hash.
 # An owner session is not required. All database work remains server-side.
 verify_jwt = false
+
+[functions.member-auth]
+# Public entry point; validates passwords and approval on the server.
+verify_jwt = false
