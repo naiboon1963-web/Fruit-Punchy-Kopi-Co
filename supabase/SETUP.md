@@ -9,7 +9,7 @@ Project: `cmsnlbvkxwsbzankxxts`.
 1. Apply all migrations in filename order. For an existing installation with the first two migrations already applied, apply only `migrations/202611210001_member_usernames_and_status.sql` through the Supabase SQL Editor or authenticated CLI. Do not rerun the historical migrations.
 2. Keep email authentication enabled, email confirmation enabled, and minimum password length at 12. Configure and test the email sender for public registration.
 3. Deploy `functions/member-auth/index.ts` as the `member-auth` Edge Function. Its gateway JWT verification must be disabled, as specified in `config.toml`; the function validates login credentials and membership status itself. It uses Supabase's automatically provided `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` only on the server.
-4. Set the Edge Function secret `MEMBER_SITE_URL` to the canonical website origin. For the current private Site this is `https://fruit-punchy-kopi-art.nbkoh.chatgpt.site`. If deploying to Vercel instead, use its stable production origin.
+4. Set the Edge Function secret `MEMBER_SITE_URL` to the canonical website origin, `https://fruit-punchy-kopi-co.vercel.app` for the production Vercel deployment.
 5. Add the canonical origin's exact `/?account=callback` and `/?account=reset` URLs to Supabase Authentication URL Configuration. Set the Site URL to the same canonical origin.
 6. Rebuild the website with `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` from the ignored `.env.local`, and publish only after the migration and Edge Function are ready. The new member flow does not use the legacy `VITE_AUTH_EMAIL_READY` flag; SMTP errors are handled by the server.
 

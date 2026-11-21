@@ -5,7 +5,11 @@ site_url = "https://fruit-punchy-kopi-co.vercel.app"
 additional_redirect_urls = [
   "https://fruit-punchy-kopi-co.vercel.app/?account=callback",
   "https://fruit-punchy-kopi-co.vercel.app/?account=set-password",
-  "https://fruit-punchy-kopi-co.vercel.app/?account=reset"
+  "https://fruit-punchy-kopi-co.vercel.app/?account=reset",
+  "https://fruit-punchy-kopi-co-nbkoh.vercel.app/",
+  "https://fruit-punchy-kopi-co-nbkoh.vercel.app/**",
+  "https://fruit-*-punchy-kopi-co-nbkoh.vercel.app",
+  "https://fruit-*-punchy-kopi-co-nbkoh.vercel.app/**"
 ]
 minimum_password_length = 12
 
