@@ -16,6 +16,15 @@ minimum_password_length = 12
 [auth.email]
 enable_confirmations = true
 
+[auth.email.smtp]
+enabled = true
+host = "smtp.gmail.com"
+port = 465
+user = "naiboon1963@gmail.com"
+pass = "env(GMAIL_SMTP_PASSWORD)"
+admin_email = "naiboon1963@gmail.com"
+sender_name = "Fruit Punchy Kopi and Art"
+
 [functions.invite-staff]
 # The handler authorizes invitations using the server-only staff-code hash.
 # An owner session is not required. All database work remains server-side.
