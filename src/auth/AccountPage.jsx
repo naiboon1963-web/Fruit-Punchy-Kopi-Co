@@ -3,7 +3,7 @@ import { accountUrl, authConfigured, supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 import './accounts.css'
 import PasswordField from './PasswordField'
-import { memberDestination } from './routes.js'
+import { accountDestination, memberDestination } from './routes.js'
 
 const pendingMessage = 'Your account is pending approval. Please contact the café team.'
 const usernamePattern = '[A-Za-z0-9_]{3,30}'
@@ -32,8 +32,8 @@ export default function AccountPage() {
           await supabase.auth.signOut({ scope: 'local' })
         } else {
           setProfile({ ...data, userId: user.id })
-          const next = new URLSearchParams(window.location.search).get('next')
-          if (next) window.location.replace(memberDestination(next))
+          const next = accountDestination(window.location)
+          if (next) window.location.replace(next)
         }
       }).catch(() => { if (active) setError('Unable to verify member access. Please try again.') })
       .finally(() => { if (active) setChecking(false) })

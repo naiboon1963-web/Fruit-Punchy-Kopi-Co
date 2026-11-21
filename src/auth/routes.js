@@ -16,8 +16,16 @@ export function memberDestination(value) {
     if (url.origin !== base || !/^\/members(?:\/|$)/.test(url.pathname)) return '/members'
     // Account parameters must not turn the destination into another auth flow.
     url.searchParams.delete('account')
+    url.searchParams.delete('next')
     return url.pathname + url.search + url.hash
   } catch { return '/members' }
+}
+
+export function accountDestination(location) {
+  // Protected pages already reached their destination; never redirect them again.
+  if (resolveRoute(location) !== 'account') return null
+  const next = new URLSearchParams(location.search).get('next')
+  return next ? memberDestination(next) : null
 }
 
 export function memberSignInUrl(location) {
