@@ -278,3 +278,16 @@ address { font-style: normal; font-size: 12px; line-height: 1.9; padding-left: 2
   .photo-credits { margin-left: auto; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+/* Readable type at every viewport. */
+.announcement, .eyebrow, .hero .eyebrow, .menu-category, .preview-pill { font-size: .875rem; }
+nav, .button, .secondary-link, .text-link, .back-top { font-size: .875rem; }
+.hero-description, .about-copy, .menu-heading > p, .menu-description, .visit-intro > p:not(.eyebrow), address, .hours { font-size: 1rem; }
+.hero-location, .hero-bottom-note, .values-inner > span, .little-note, .menu-note p, .map-hint, .detail-note, .footer-main > p, .footer-bottom, .photo-credits > div { font-size: .875rem; }
+.menu-number { display: none; }
+.button .icon, .nav-visit .icon, .text-link .icon, .secondary-link > span, .back-top .icon { display: none; }
+.header-inner { flex-wrap: wrap; padding-block: 18px; }
+.hero .eyebrow { letter-spacing: .06em; }
+.menu-category { letter-spacing: .06em; }
+@media (min-width: 701px) and (max-width: 1100px) { nav { gap: 16px; flex-wrap: wrap; } .hero { grid-template-columns: 1.2fr 1fr; } }
+@media (max-width: 700px) { .header-inner { flex-wrap: nowrap; padding-block: 0; } .hero-actions { align-items: flex-start; flex-direction: column; } .hero .eyebrow { font-size: .875rem; } .footer-main { grid-template-columns: 1fr; } .back-top { grid-row: auto; } .hours > div { flex-wrap: wrap; } }

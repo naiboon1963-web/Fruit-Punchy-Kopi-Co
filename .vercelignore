@@ -1,9 +1,12 @@
 .git
-node_modules
-dist
+.openai
 .pnpm-store
+node_modules
+outputs
 tmp
+supabase/.temp
+.env
+.env.*
+!.env.example
 *.pdf
-README.md
-supabase
-.env*
+supabase/
