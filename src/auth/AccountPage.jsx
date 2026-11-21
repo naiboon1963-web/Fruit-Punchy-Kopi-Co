@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { accountUrl, authConfigured, supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 import './accounts.css'
+import PasswordField from './PasswordField'
+import { memberDestination } from './routes.js'
 
 const pendingMessage = 'Your account is pending approval. Please contact the café team.'
 const usernamePattern = '[A-Za-z0-9_]{3,30}'
 
 export default function AccountPage() {
-  const { user, loading, recovery, clearRecovery } = useAuth()
+  const { user, loading, recovery, clearRecovery, authError } = useAuth()
   const initial = new URLSearchParams(window.location.search).get('account')
-  const [view, setView] = useState(initial === 'join' ? 'join' : initial === 'reset' ? 'reset' : 'signin')
+  const [view, setView] = useState(['join', 'reset', 'forgot'].includes(initial) ? initial : 'signin')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -28,7 +30,11 @@ export default function AccountPage() {
         if (profileError || data?.status !== 'Active') {
           setError(data?.status === 'Pending' ? pendingMessage : 'Member access is unavailable. Your account may be pending approval. Please contact the café team.')
           await supabase.auth.signOut({ scope: 'local' })
-        } else setProfile(data)
+        } else {
+          setProfile({ ...data, userId: user.id })
+          const next = new URLSearchParams(window.location.search).get('next')
+          if (next) window.location.replace(memberDestination(next))
+        }
       }).catch(() => { if (active) setError('Unable to verify member access. Please try again.') })
       .finally(() => { if (active) setChecking(false) })
     return () => { active = false }
@@ -36,7 +42,10 @@ export default function AccountPage() {
 
   function navigate(next) {
     setView(next); setError(''); setMessage('')
-    window.history.replaceState(null, '', accountUrl(next))
+    const url = new URL(accountUrl(next))
+    const destination = new URLSearchParams(window.location.search).get('next')
+    if (destination) url.searchParams.set('next', memberDestination(destination))
+    window.history.replaceState(null, '', url)
   }
 
   async function submit(event) {
@@ -60,6 +69,7 @@ export default function AccountPage() {
       const { data, error: requestError } = await supabase.functions.invoke('member-auth', { body })
       if (requestError) {
         const detail = await requestError.context?.json?.().catch(() => null)
+        if (requestError.context?.status === 404) throw new Error('Member services are not deployed yet. Please contact the café team.')
         throw new Error(detail?.error || 'Unable to connect to member services. Please try again.')
       }
       if (data?.error) throw new Error(data.error)
@@ -89,20 +99,23 @@ export default function AccountPage() {
   const settingPassword = view === 'reset' || recovery
   return <main id="main" className="account-layout shell"><aside className="account-intro"><p className="eyebrow">YOUR NEIGHBOURHOOD CORNER</p><h1>A little kopi.<br /><em>A warm welcome.</em></h1><p>Join our café community and make yourself at home.</p><img src="/images/fruit-punchy-logo.webp" alt="Fruit Punchy fruit characters" width="818" height="392" /><a className="text-link" href="/">Back to the café</a></aside><section className="account-panel" aria-labelledby="account-heading">
     {!authConfigured && <p className="account-notice" role="status">Member services are not configured yet.</p>}
-    {error && <p className="account-notice account-error" role="alert">{error}</p>}
+    {(error || authError) && <p className="account-notice account-error" role="alert">{error || authError}</p>}
     {message && <p className="account-notice" role="status">{message}</p>}
-    {loading || checking ? <h2 id="account-heading">Checking your account…</h2> : profile && !settingPassword ? <><p className="eyebrow">YOUR MEMBER CORNER</p><h2 id="account-heading">Welcome, {profile.full_name}.</h2><dl><dt>Login username</dt><dd>{profile.username}</dd><dt>Full name</dt><dd>{profile.full_name}</dd></dl><button className="button" onClick={logout} disabled={busy}>Log out</button></> : <>
+    {loading || checking ? <h2 id="account-heading">Checking your account…</h2> : profile && profile.userId === user?.id && !settingPassword ? <><p className="eyebrow">YOUR MEMBER CORNER</p><h2 id="account-heading">Welcome, {profile.full_name}.</h2><dl><dt>Login username</dt><dd>{profile.username}</dd><dt>Full name</dt><dd>{profile.full_name}</dd></dl><a className="text-link" href="/members">Member corner</a><button className="button" onClick={logout} disabled={busy}>Log out</button></> : <>
       <h2 id="account-heading">{settingPassword ? 'Choose a new password.' : view === 'join' ? 'Create your membership.' : view === 'forgot' ? 'Reset your password.' : 'Member login.'}</h2>
       {view === 'join' && <p>New memberships start as Pending. The café team must activate your membership before you can sign in.</p>}
       <form className="account-form" onSubmit={submit}>
         {!settingPassword && view !== 'forgot' && <label>Login username<input name="username" autoComplete="username" pattern={usernamePattern} minLength={3} maxLength={30} title="3–30 letters, numbers or underscores" required /><span className="account-field-hint">3–30 letters, numbers or underscores. Usernames are not case-sensitive.</span></label>}
         {(view === 'join' || view === 'forgot') && !settingPassword && <label>Email address<input name="email" type="email" autoComplete="email" maxLength={254} required /></label>}
         {view === 'join' && !settingPassword && <><label>Full name<input name="full_name" autoComplete="name" maxLength={100} required /></label><label>Telephone number<input name="telephone" type="tel" autoComplete="tel" minLength={6} maxLength={30} required /></label></>}
-        {(view !== 'forgot' || settingPassword) && <label>{settingPassword ? 'New password' : 'Password'}<input name="password" type="password" autoComplete={view === 'join' || settingPassword ? 'new-password' : 'current-password'} minLength={view === 'join' || settingPassword ? 12 : undefined} maxLength={128} required /></label>}
-        {settingPassword && <label>Confirm password<input name="confirm" type="password" autoComplete="new-password" minLength={12} maxLength={128} required /></label>}
+        {(view !== 'forgot' || settingPassword) && <PasswordField key={`${view}-${settingPassword}`} label={settingPassword ? 'New password' : 'Password'} name="password" autoComplete={view === 'join' || settingPassword ? 'new-password' : 'current-password'} minLength={view === 'join' || settingPassword ? 12 : undefined} maxLength={128} required />}
+        {settingPassword && <PasswordField label="Confirm password" name="confirm" autoComplete="new-password" minLength={12} maxLength={128} required />}
         <button className="button" disabled={busy || !authConfigured || (settingPassword && !user)}>{busy ? 'Please wait…' : settingPassword ? 'Save password' : view === 'join' ? 'Create member account' : view === 'forgot' ? 'Send reset email' : 'Sign in'}</button>
       </form><div className="account-links"><button onClick={() => navigate(view === 'join' ? 'signin' : 'join')}>{view === 'join' ? 'Already a member? Sign in' : 'Create a member account'}</button><button onClick={() => navigate('signin')}>Member login</button><button onClick={() => navigate('forgot')}>Forgot password?</button></div>
     </>}
   </section></main>
 }
+
+
+
 

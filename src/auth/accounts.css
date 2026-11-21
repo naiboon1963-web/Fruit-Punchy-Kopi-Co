@@ -16,6 +16,13 @@
 .account-form label { display: grid; gap: 8px; font-size: 12px; font-weight: 650; }
 .account-form input { width: 100%; min-height: 47px; border-radius: 9px; border: 1px solid #254e4266; background: #fffdf6; color: #254e42; padding: 11px 13px; font: inherit; font-size: 14px; }
 .account-form input:focus-visible { outline: 2px solid #254e42; outline-offset: 2px; }
+.password-field { display: grid; gap: 8px; }
+.password-input { position: relative; }
+.password-input input { padding-right: 76px; }
+.password-toggle { position: absolute; right: 5px; top: 4px; bottom: 4px; min-width: 62px; border: 0; border-radius: 6px; background: transparent; color: #254e42; font: inherit; font-size: 12px; font-weight: 650; cursor: pointer; }
+.password-toggle:hover { background: #e4efd9; }
+.password-toggle:focus-visible { outline: 2px solid #254e42; outline-offset: 1px; }
+.password-input input::-ms-reveal { display: none; }
 .account-form .button { justify-content: center; }
 .account-field-hint { margin: -7px 0 0; font-size: 11px; line-height: 1.7; }
 .account-panel button:disabled { opacity: .6; cursor: not-allowed; transform: none; }
